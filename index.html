@@ -113,6 +113,20 @@
             </svg>
         );
 
+        const Copy = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+        );
+
+        const Clipboard = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+            </svg>
+        );
+
         function CucinaApp() {
             const [activeTab, setActiveTab] = useState('ricette');
             const [ricette, setRicette] = useState([]);
@@ -120,6 +134,7 @@
             const [listaSpesa, setListaSpesa] = useState([]);
             const [pasti, setPasti] = useState([]);
             const [editingId, setEditingId] = useState(null);
+            const [editingRecipeId, setEditingRecipeId] = useState(null);
 
             // Carica dati da localStorage all'avvio
             useEffect(() => {
@@ -154,14 +169,46 @@
 
             const aggiungiRicetta = () => {
                 if (!nuovaRicetta.nome) return;
-                
-                const ricetta = {
-                    id: Date.now(),
-                    ...nuovaRicetta,
-                    ingredienti: nuovaRicetta.ingredienti.filter(i => i.nome && i.quantita)
-                };
-                
-                setRicette([...ricette, ricetta]);
+
+                if (editingRecipeId) {
+                    // Modalità modifica
+                    setRicette(ricette.map(r =>
+                        r.id === editingRecipeId
+                            ? { ...r, ...nuovaRicetta, ingredienti: nuovaRicetta.ingredienti.filter(i => i.nome && i.quantita) }
+                            : r
+                    ));
+                    setEditingRecipeId(null);
+                } else {
+                    // Modalità creazione
+                    const ricetta = {
+                        id: Date.now(),
+                        ...nuovaRicetta,
+                        ingredienti: nuovaRicetta.ingredienti.filter(i => i.nome && i.quantita)
+                    };
+                    setRicette([...ricette, ricetta]);
+                }
+
+                setNuovaRicetta({
+                    nome: '',
+                    ingredienti: [{ nome: '', quantita: '', unita: 'g' }],
+                    istruzioni: '',
+                    macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' }
+                });
+            };
+
+            const modificaRicetta = (ricetta) => {
+                setNuovaRicetta({
+                    nome: ricetta.nome,
+                    ingredienti: ricetta.ingredienti.length > 0 ? ricetta.ingredienti : [{ nome: '', quantita: '', unita: 'g' }],
+                    istruzioni: ricetta.istruzioni || '',
+                    macro: ricetta.macro
+                });
+                setEditingRecipeId(ricetta.id);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            const annullaModificaRicetta = () => {
+                setEditingRecipeId(null);
                 setNuovaRicetta({
                     nome: '',
                     ingredienti: [{ nome: '', quantita: '', unita: 'g' }],
@@ -172,6 +219,50 @@
 
             const eliminaRicetta = (id) => {
                 setRicette(ricette.filter(r => r.id !== id));
+            };
+
+            const copiaIngredientiJSON = () => {
+                const ingredientiValidi = nuovaRicetta.ingredienti.filter(i => i.nome && i.quantita);
+                if (ingredientiValidi.length === 0) {
+                    alert('Aggiungi almeno un ingrediente prima di copiare!');
+                    return;
+                }
+
+                const json = JSON.stringify({
+                    nome: nuovaRicetta.nome || 'Ricetta senza nome',
+                    ingredienti: ingredientiValidi,
+                    istruzioni: nuovaRicetta.istruzioni
+                }, null, 2);
+
+                navigator.clipboard.writeText(json).then(() => {
+                    alert('✅ JSON copiato! Incollalo nella chat con Claude e chiedi di calcolare i macro.');
+                }).catch(() => {
+                    alert('❌ Errore nella copia. Prova manualmente:\n\n' + json);
+                });
+            };
+
+            const incollaMacroJSON = async () => {
+                try {
+                    const text = await navigator.clipboard.readText();
+                    const data = JSON.parse(text);
+
+                    if (data.macro && data.macro.calorie !== undefined) {
+                        setNuovaRicetta({
+                            ...nuovaRicetta,
+                            macro: {
+                                calorie: data.macro.calorie || '',
+                                proteine: data.macro.proteine || '',
+                                carboidrati: data.macro.carboidrati || '',
+                                grassi: data.macro.grassi || ''
+                            }
+                        });
+                        alert('✅ Macro incollati con successo!');
+                    } else {
+                        alert('❌ JSON non valido. Assicurati che contenga un oggetto "macro" con calorie, proteine, carboidrati e grassi.');
+                    }
+                } catch (e) {
+                    alert('❌ Errore: ' + e.message + '\n\nIncolla un JSON valido nella forma:\n{\n  "macro": {\n    "calorie": 500,\n    "proteine": 30,\n    "carboidrati": 50,\n    "grassi": 15\n  }\n}');
+                }
             };
 
             const aggiungiIngredienteRicetta = () => {
@@ -403,7 +494,19 @@
                                     <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-gray-800">Le Mie Ricette</h2>
 
                                     <div className="bg-orange-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
-                                        <h3 className="font-semibold mb-3 text-sm sm:text-base">Aggiungi Ricetta</h3>
+                                        <div className="flex justify-between items-center mb-3">
+                                            <h3 className="font-semibold text-sm sm:text-base">
+                                                {editingRecipeId ? 'Modifica Ricetta' : 'Aggiungi Ricetta'}
+                                            </h3>
+                                            {editingRecipeId && (
+                                                <button
+                                                    onClick={annullaModificaRicetta}
+                                                    className="text-red-600 hover:text-red-700 text-sm"
+                                                >
+                                                    Annulla
+                                                </button>
+                                            )}
+                                        </div>
                                         <input
                                             type="text"
                                             placeholder="Nome ricetta"
@@ -469,6 +572,17 @@
                                             </button>
                                         </div>
 
+                                        <div className="flex gap-2 mb-3">
+                                            <button
+                                                onClick={copiaIngredientiJSON}
+                                                className="flex-1 flex items-center justify-center gap-2 bg-indigo-500 text-white px-3 py-2 rounded-lg hover:bg-indigo-600 transition text-sm min-h-[44px]"
+                                            >
+                                                <Copy />
+                                                <span className="hidden sm:inline">Copia Ingredienti per AI</span>
+                                                <span className="sm:hidden">Copia per AI</span>
+                                            </button>
+                                        </div>
+
                                         <textarea
                                             placeholder="Istruzioni di preparazione..."
                                             value={nuovaRicetta.istruzioni}
@@ -519,11 +633,22 @@
                                             />
                                         </div>
 
+                                        <div className="flex gap-2 mb-3">
+                                            <button
+                                                onClick={incollaMacroJSON}
+                                                className="flex-1 flex items-center justify-center gap-2 bg-teal-500 text-white px-3 py-2 rounded-lg hover:bg-teal-600 transition text-sm min-h-[44px]"
+                                            >
+                                                <Clipboard />
+                                                <span className="hidden sm:inline">Incolla Macro da AI</span>
+                                                <span className="sm:hidden">Incolla da AI</span>
+                                            </button>
+                                        </div>
+
                                         <button
                                             onClick={aggiungiRicetta}
                                             className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition min-h-[44px] text-base font-semibold"
                                         >
-                                            Aggiungi Ricetta
+                                            {editingRecipeId ? 'Salva Modifiche' : 'Aggiungi Ricetta'}
                                         </button>
                                     </div>
 
@@ -533,6 +658,13 @@
                                                 <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2 mb-2">
                                                     <h3 className="text-lg sm:text-xl font-semibold text-gray-800">{ricetta.nome}</h3>
                                                     <div className="flex gap-2 flex-shrink-0">
+                                                        <button
+                                                            onClick={() => modificaRicetta(ricetta)}
+                                                            className="text-amber-600 hover:text-amber-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                                                            title="Modifica ricetta"
+                                                        >
+                                                            <Edit2 />
+                                                        </button>
                                                         <button
                                                             onClick={() => usaRicetta(ricetta)}
                                                             className="text-green-600 hover:text-green-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
