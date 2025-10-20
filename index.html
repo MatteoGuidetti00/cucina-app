@@ -387,22 +387,30 @@
 
             const [nuovoPasto, setNuovoPasto] = useState({
                 data: new Date().toISOString().split('T')[0],
+                tipoPasto: 'Pranzo',
                 nome: '',
                 quantita: '',
                 unita: 'g',
-                macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' }
+                macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' },
+                isRicetta: false,
+                ricettaId: null
             });
+
+            const tipiPasto = ['Colazione', 'Spuntino Mattina', 'Pranzo', 'Spuntino Pomeriggio', 'Pre-Workout', 'Post-Workout', 'Cena', 'Spuntino Sera'];
 
             const aggiungiPasto = () => {
                 if (!nuovoPasto.nome) return;
-                
+
                 setPasti([...pasti, { id: Date.now(), ...nuovoPasto }]);
                 setNuovoPasto({
                     data: new Date().toISOString().split('T')[0],
+                    tipoPasto: nuovoPasto.tipoPasto, // Mantieni lo stesso tipo pasto
                     nome: '',
                     quantita: '',
                     unita: 'g',
-                    macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' }
+                    macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' },
+                    isRicetta: false,
+                    ricettaId: null
                 });
             };
 
@@ -432,9 +440,65 @@
                     nome: ricetta.nome,
                     quantita: grammiDefault,
                     unita: 'g',
-                    macro: macroCalcolati
+                    macro: macroCalcolati,
+                    isRicetta: true,
+                    ricettaId: ricetta.id
                 });
                 setActiveTab('tracking');
+            };
+
+            const selezionaRicettaTracking = (ricettaId) => {
+                if (!ricettaId) {
+                    // Reset a inserimento manuale
+                    setNuovoPasto({
+                        ...nuovoPasto,
+                        nome: '',
+                        quantita: '',
+                        unita: 'g',
+                        macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' },
+                        isRicetta: false,
+                        ricettaId: null
+                    });
+                    return;
+                }
+
+                const ricetta = ricette.find(r => r.id === parseInt(ricettaId));
+                if (!ricetta) return;
+
+                const grammiDefault = ricetta.grammiPorzione || '100';
+                const macroCalcolati = ricetta.grammiPorzione
+                    ? calcolaMacroDaGrammi(ricetta, parseFloat(ricetta.grammiPorzione))
+                    : ricetta.macro;
+
+                setNuovoPasto({
+                    ...nuovoPasto,
+                    nome: ricetta.nome,
+                    quantita: grammiDefault,
+                    unita: 'g',
+                    macro: macroCalcolati,
+                    isRicetta: true,
+                    ricettaId: ricetta.id
+                });
+            };
+
+            const aggiornaQuantitaRicetta = (quantita) => {
+                if (!nuovoPasto.isRicetta || !nuovoPasto.ricettaId) {
+                    setNuovoPasto({ ...nuovoPasto, quantita });
+                    return;
+                }
+
+                const ricetta = ricette.find(r => r.id === nuovoPasto.ricettaId);
+                if (!ricetta || !quantita) {
+                    setNuovoPasto({ ...nuovoPasto, quantita });
+                    return;
+                }
+
+                const macroCalcolati = calcolaMacroDaGrammi(ricetta, parseFloat(quantita));
+                setNuovoPasto({
+                    ...nuovoPasto,
+                    quantita,
+                    macro: macroCalcolati
+                });
             };
 
             const totaliGiornalieri = (data) => {
@@ -990,6 +1054,7 @@
 
                                     <div className="bg-purple-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
                                         <h3 className="font-semibold mb-3 text-sm sm:text-base">Registra Pasto</h3>
+
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
                                             <input
                                                 type="date"
@@ -997,28 +1062,62 @@
                                                 onChange={(e) => setNuovoPasto({ ...nuovoPasto, data: e.target.value })}
                                                 className="p-3 border rounded text-base"
                                             />
+                                            <select
+                                                value={nuovoPasto.tipoPasto}
+                                                onChange={(e) => setNuovoPasto({ ...nuovoPasto, tipoPasto: e.target.value })}
+                                                className="p-3 border rounded text-base font-semibold"
+                                            >
+                                                {tipiPasto.map(tipo => (
+                                                    <option key={tipo} value={tipo}>{tipo}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="mb-3">
+                                            <label className="text-xs text-gray-600 block mb-1">Scegli una ricetta (opzionale)</label>
+                                            <select
+                                                value={nuovoPasto.ricettaId || ''}
+                                                onChange={(e) => selezionaRicettaTracking(e.target.value)}
+                                                className="w-full p-3 border rounded text-base bg-white"
+                                            >
+                                                <option value="">Inserimento manuale</option>
+                                                {ricette.map(ricetta => (
+                                                    <option key={ricetta.id} value={ricetta.id}>
+                                                        {ricetta.nome} {ricetta.grammiPorzione ? `(${ricetta.grammiPorzione}g)` : '(100g)'}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
                                             <input
                                                 type="text"
-                                                placeholder="Nome pasto/alimento"
+                                                placeholder="Nome alimento"
                                                 value={nuovoPasto.nome}
                                                 onChange={(e) => setNuovoPasto({ ...nuovoPasto, nome: e.target.value })}
                                                 className="p-3 border rounded text-base"
+                                                disabled={nuovoPasto.isRicetta}
                                             />
-                                            <input
-                                                type="number"
-                                                placeholder="Quantità"
-                                                value={nuovoPasto.quantita}
-                                                onChange={(e) => setNuovoPasto({ ...nuovoPasto, quantita: e.target.value })}
-                                                className="p-3 border rounded text-base"
-                                            />
-                                            <select
-                                                value={nuovoPasto.unita}
-                                                onChange={(e) => setNuovoPasto({ ...nuovoPasto, unita: e.target.value })}
-                                                className="p-3 border rounded text-base"
-                                            >
-                                                <option value="porzione">porzione</option>
-                                                {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
-                                            </select>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="number"
+                                                    placeholder="Quantità"
+                                                    value={nuovoPasto.quantita}
+                                                    onChange={(e) => aggiornaQuantitaRicetta(e.target.value)}
+                                                    className="flex-1 p-3 border rounded text-base"
+                                                />
+                                                <select
+                                                    value={nuovoPasto.unita}
+                                                    onChange={(e) => setNuovoPasto({ ...nuovoPasto, unita: e.target.value })}
+                                                    className="p-3 border rounded text-base"
+                                                    disabled={nuovoPasto.isRicetta}
+                                                >
+                                                    <option value="g">g</option>
+                                                    <option value="kg">kg</option>
+                                                    <option value="porzione">porzione</option>
+                                                    {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                                </select>
+                                            </div>
                                         </div>
 
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
@@ -1102,39 +1201,72 @@
                                         </div>
                                     )}
 
-                                    <div className="space-y-3">
-                                        {[...pasti].reverse().map(pasto => (
-                                            <div key={pasto.id} className="border rounded-lg p-3 sm:p-4 hover:shadow-md transition">
-                                                <div className="flex justify-between items-start gap-2 mb-2">
-                                                    <div className="flex-1">
-                                                        <h3 className="font-semibold text-gray-800 text-sm sm:text-base">{pasto.nome}</h3>
-                                                        <p className="text-xs sm:text-sm text-gray-500">
-                                                            {new Date(pasto.data + 'T00:00:00').toLocaleDateString('it-IT')} • {pasto.quantita} {pasto.unita}
-                                                        </p>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => eliminaPasto(pasto.id)}
-                                                        className="text-red-600 hover:text-red-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0"
-                                                    >
-                                                        <Trash2 />
-                                                    </button>
+                                    <div className="space-y-4">
+                                        {(() => {
+                                            // Raggruppa i pasti per data e tipo pasto
+                                            const pastiRaggruppati = {};
+                                            [...pasti].reverse().forEach(pasto => {
+                                                const data = pasto.data;
+                                                if (!pastiRaggruppati[data]) {
+                                                    pastiRaggruppati[data] = {};
+                                                }
+                                                const tipoPasto = pasto.tipoPasto || 'Altro';
+                                                if (!pastiRaggruppati[data][tipoPasto]) {
+                                                    pastiRaggruppati[data][tipoPasto] = [];
+                                                }
+                                                pastiRaggruppati[data][tipoPasto].push(pasto);
+                                            });
+
+                                            return Object.entries(pastiRaggruppati).map(([data, pastiPerTipo]) => (
+                                                <div key={data} className="border-2 border-purple-200 rounded-lg p-3 sm:p-4 bg-white">
+                                                    <h3 className="font-bold text-lg text-purple-700 mb-3">
+                                                        {new Date(data + 'T00:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                                    </h3>
+
+                                                    {Object.entries(pastiPerTipo).map(([tipoPasto, pastiDelTipo]) => (
+                                                        <div key={tipoPasto} className="mb-3 last:mb-0">
+                                                            <h4 className="font-semibold text-sm text-purple-600 mb-2 flex items-center gap-2">
+                                                                <span className="bg-purple-100 px-2 py-1 rounded">{tipoPasto}</span>
+                                                            </h4>
+                                                            <div className="space-y-2 ml-0 sm:ml-4">
+                                                                {pastiDelTipo.map(pasto => (
+                                                                    <div key={pasto.id} className="border rounded-lg p-2 sm:p-3 bg-gray-50 hover:bg-gray-100 transition">
+                                                                        <div className="flex justify-between items-start gap-2 mb-2">
+                                                                            <div className="flex-1">
+                                                                                <h5 className="font-semibold text-gray-800 text-sm">{pasto.nome}</h5>
+                                                                                <p className="text-xs text-gray-500">
+                                                                                    {pasto.quantita} {pasto.unita}
+                                                                                </p>
+                                                                            </div>
+                                                                            <button
+                                                                                onClick={() => eliminaPasto(pasto.id)}
+                                                                                className="text-red-600 hover:text-red-700 p-1 min-w-[36px] min-h-[36px] flex items-center justify-center flex-shrink-0"
+                                                                            >
+                                                                                <Trash2 />
+                                                                            </button>
+                                                                        </div>
+                                                                        <div className="flex flex-wrap gap-1 text-xs">
+                                                                            <span className="bg-red-100 text-red-700 px-2 py-1 rounded">
+                                                                                {pasto.macro.calorie} kcal
+                                                                            </span>
+                                                                            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                                                                P: {pasto.macro.proteine}g
+                                                                            </span>
+                                                                            <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
+                                                                                C: {pasto.macro.carboidrati}g
+                                                                            </span>
+                                                                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
+                                                                                G: {pasto.macro.grassi}g
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                                <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
-                                                    <span className="bg-red-100 text-red-700 px-2 py-1 rounded">
-                                                        {pasto.macro.calorie} kcal
-                                                    </span>
-                                                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                                                        P: {pasto.macro.proteine}g
-                                                    </span>
-                                                    <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
-                                                        C: {pasto.macro.carboidrati}g
-                                                    </span>
-                                                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
-                                                        G: {pasto.macro.grassi}g
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            ));
+                                        })()}
                                     </div>
                                 </div>
                             )}
