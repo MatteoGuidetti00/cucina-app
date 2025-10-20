@@ -162,6 +162,8 @@
                 nome: '',
                 ingredienti: [{ nome: '', quantita: '', unita: 'g' }],
                 istruzioni: '',
+                grammiTotali: '',
+                grammiPorzione: '',
                 macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' }
             });
 
@@ -192,6 +194,8 @@
                     nome: '',
                     ingredienti: [{ nome: '', quantita: '', unita: 'g' }],
                     istruzioni: '',
+                    grammiTotali: '',
+                    grammiPorzione: '',
                     macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' }
                 });
             };
@@ -201,6 +205,8 @@
                     nome: ricetta.nome,
                     ingredienti: ricetta.ingredienti.length > 0 ? ricetta.ingredienti : [{ nome: '', quantita: '', unita: 'g' }],
                     istruzioni: ricetta.istruzioni || '',
+                    grammiTotali: ricetta.grammiTotali || '',
+                    grammiPorzione: ricetta.grammiPorzione || '',
                     macro: ricetta.macro
                 });
                 setEditingRecipeId(ricetta.id);
@@ -213,6 +219,8 @@
                     nome: '',
                     ingredienti: [{ nome: '', quantita: '', unita: 'g' }],
                     istruzioni: '',
+                    grammiTotali: '',
+                    grammiPorzione: '',
                     macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' }
                 });
             };
@@ -229,7 +237,7 @@
                 }
 
                 const richiesta = {
-                    richiesta: "Calcola le calorie totali e i macronutrienti (proteine, carboidrati, grassi in grammi) per questa ricetta. Restituisci il risultato compilando il campo 'outputJson' qui sotto.",
+                    richiesta: "Calcola le calorie totali e i macronutrienti (proteine, carboidrati, grassi in grammi) per 100g di piatto finito di questa ricetta. Considera che gli ingredienti crudi cambiano peso dopo la cottura. Restituisci il risultato compilando il campo 'outputJson' qui sotto con i valori per 100g di piatto finito.",
                     ricetta: {
                         nome: nuovaRicetta.nome || 'Ricetta senza nome',
                         ingredienti: ingredientiValidi,
@@ -248,7 +256,7 @@
                 const json = JSON.stringify(richiesta, null, 2);
 
                 navigator.clipboard.writeText(json).then(() => {
-                    alert('✅ JSON copiato! Incollalo nella chat con Claude.\n\nClaude calcolerà i macro e restituirà il JSON già pronto da incollare nell\'app.');
+                    alert('✅ JSON copiato! Incollalo nella chat con Claude.\n\nClaude calcolerà i macro per 100g di piatto finito e restituirà il JSON già pronto da incollare nell\'app.');
                 }).catch(() => {
                     alert('❌ Errore nella copia. Prova manualmente:\n\n' + json);
                 });
@@ -402,13 +410,29 @@
                 setPasti(pasti.filter(p => p.id !== id));
             };
 
+            const calcolaMacroDaGrammi = (ricetta, grammi) => {
+                const fattore = grammi / 100;
+                return {
+                    calorie: Math.round(parseFloat(ricetta.macro.calorie || 0) * fattore),
+                    proteine: (parseFloat(ricetta.macro.proteine || 0) * fattore).toFixed(1),
+                    carboidrati: (parseFloat(ricetta.macro.carboidrati || 0) * fattore).toFixed(1),
+                    grassi: (parseFloat(ricetta.macro.grassi || 0) * fattore).toFixed(1)
+                };
+            };
+
             const usaRicetta = (ricetta) => {
+                // Se la ricetta ha grammiPorzione definito, usa quello come default
+                const grammiDefault = ricetta.grammiPorzione || '100';
+                const macroCalcolati = ricetta.grammiPorzione
+                    ? calcolaMacroDaGrammi(ricetta, parseFloat(ricetta.grammiPorzione))
+                    : ricetta.macro;
+
                 setNuovoPasto({
                     ...nuovoPasto,
                     nome: ricetta.nome,
-                    quantita: '1',
-                    unita: 'porzione',
-                    macro: ricetta.macro
+                    quantita: grammiDefault,
+                    unita: 'g',
+                    macro: macroCalcolati
                 });
                 setActiveTab('tracking');
             };
@@ -603,6 +627,33 @@
                                             className="w-full p-3 border rounded mb-3 h-24 text-base"
                                         />
 
+                                        <div className="grid grid-cols-2 gap-2 mb-3">
+                                            <div>
+                                                <label className="text-xs text-gray-600 block mb-1">Grammi totali piatto finito</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="es. 400"
+                                                    value={nuovaRicetta.grammiTotali}
+                                                    onChange={(e) => setNuovaRicetta({ ...nuovaRicetta, grammiTotali: e.target.value })}
+                                                    className="w-full p-3 border rounded text-base"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs text-gray-600 block mb-1">Grammi per 1 porzione</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="es. 200"
+                                                    value={nuovaRicetta.grammiPorzione}
+                                                    onChange={(e) => setNuovaRicetta({ ...nuovaRicetta, grammiPorzione: e.target.value })}
+                                                    className="w-full p-3 border rounded text-base"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-blue-50 p-3 rounded mb-3 text-xs text-gray-700">
+                                            <strong>ℹ️ Info:</strong> I macro inseriti sotto devono essere per <strong>100g di piatto finito</strong>. Usa il bottone "Copia per AI" per farli calcolare automaticamente da Claude.
+                                        </div>
+
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
                                             <input
                                                 type="number"
@@ -714,20 +765,50 @@
                                                     <p className="text-sm text-gray-600 mb-2">{ricetta.istruzioni}</p>
                                                 )}
 
-                                                <div className="flex flex-wrap gap-2 text-sm">
-                                                    <span className="bg-red-100 text-red-700 px-2 py-1 rounded">
-                                                        {ricetta.macro.calorie} kcal
-                                                    </span>
-                                                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                                                        P: {ricetta.macro.proteine}g
-                                                    </span>
-                                                    <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
-                                                        C: {ricetta.macro.carboidrati}g
-                                                    </span>
-                                                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
-                                                        G: {ricetta.macro.grassi}g
-                                                    </span>
+                                                <div className="mb-2">
+                                                    <p className="text-xs text-gray-500 mb-1">Macro per 100g:</p>
+                                                    <div className="flex flex-wrap gap-2 text-sm">
+                                                        <span className="bg-red-100 text-red-700 px-2 py-1 rounded">
+                                                            {ricetta.macro.calorie} kcal
+                                                        </span>
+                                                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                                            P: {ricetta.macro.proteine}g
+                                                        </span>
+                                                        <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
+                                                            C: {ricetta.macro.carboidrati}g
+                                                        </span>
+                                                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
+                                                            G: {ricetta.macro.grassi}g
+                                                        </span>
+                                                    </div>
                                                 </div>
+
+                                                {ricetta.grammiPorzione && (
+                                                    <div>
+                                                        <p className="text-xs text-gray-500 mb-1">Macro per porzione ({ricetta.grammiPorzione}g):</p>
+                                                        <div className="flex flex-wrap gap-2 text-sm">
+                                                            {(() => {
+                                                                const macroPorzione = calcolaMacroDaGrammi(ricetta, parseFloat(ricetta.grammiPorzione));
+                                                                return (
+                                                                    <>
+                                                                        <span className="bg-red-50 text-red-600 px-2 py-1 rounded border border-red-200">
+                                                                            {macroPorzione.calorie} kcal
+                                                                        </span>
+                                                                        <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-200">
+                                                                            P: {macroPorzione.proteine}g
+                                                                        </span>
+                                                                        <span className="bg-yellow-50 text-yellow-600 px-2 py-1 rounded border border-yellow-200">
+                                                                            C: {macroPorzione.carboidrati}g
+                                                                        </span>
+                                                                        <span className="bg-green-50 text-green-600 px-2 py-1 rounded border border-green-200">
+                                                                            G: {macroPorzione.grassi}g
+                                                                        </span>
+                                                                    </>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
