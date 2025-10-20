@@ -661,19 +661,43 @@
                                         <div className="mb-3">
                                             <label className="font-semibold block mb-2 text-sm sm:text-base">Ingredienti:</label>
                                             {nuovaRicetta.ingredienti.map((ing, idx) => (
-                                                <div key={idx} className="flex flex-col sm:flex-row gap-2 mb-2">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Nome"
-                                                        value={ing.nome}
+                                                <div key={idx} className="flex flex-col gap-2 mb-3 p-2 bg-gray-50 rounded">
+                                                    <select
+                                                        value=""
                                                         onChange={(e) => {
-                                                            const nuoviIng = [...nuovaRicetta.ingredienti];
-                                                            nuoviIng[idx].nome = e.target.value;
-                                                            setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
+                                                            if (e.target.value) {
+                                                                const ingDB = ingredientiDB.find(i => i.id === parseInt(e.target.value));
+                                                                if (ingDB) {
+                                                                    const nuoviIng = [...nuovaRicetta.ingredienti];
+                                                                    nuoviIng[idx] = {
+                                                                        nome: ingDB.nome,
+                                                                        quantita: '100',
+                                                                        unita: ingDB.unitaDefault
+                                                                    };
+                                                                    setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
+                                                                }
+                                                            }
                                                         }}
-                                                        className="flex-1 p-3 border rounded text-base"
-                                                    />
-                                                    <div className="flex gap-2">
+                                                        className="w-full p-2 border rounded text-sm bg-white"
+                                                    >
+                                                        <option value="">🔍 Cerca nel database o inserisci manualmente sotto</option>
+                                                        {ingredientiDB.map(ingDB => (
+                                                            <option key={ingDB.id} value={ingDB.id}>{ingDB.nome}</option>
+                                                        ))}
+                                                    </select>
+                                                    <div className="flex flex-col sm:flex-row gap-2">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Nome ingrediente"
+                                                            value={ing.nome}
+                                                            onChange={(e) => {
+                                                                const nuoviIng = [...nuovaRicetta.ingredienti];
+                                                                nuoviIng[idx].nome = e.target.value;
+                                                                setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
+                                                            }}
+                                                            className="flex-1 p-3 border rounded text-base"
+                                                        />
+                                                        <div className="flex gap-2">
                                                         <input
                                                             type="number"
                                                             placeholder="Qtà"
@@ -704,6 +728,7 @@
                                                                 <X />
                                                             </button>
                                                         )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))}
@@ -1040,6 +1065,27 @@
                                     <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-gray-800">Inventario Ingredienti</h2>
 
                                     <div className="bg-blue-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 flex flex-col gap-2">
+                                        <select
+                                            value=""
+                                            onChange={(e) => {
+                                                if (e.target.value) {
+                                                    const ingDB = ingredientiDB.find(i => i.id === parseInt(e.target.value));
+                                                    if (ingDB) {
+                                                        setNuovoItem({
+                                                            nome: ingDB.nome,
+                                                            quantita: '100',
+                                                            unita: ingDB.unitaDefault
+                                                        });
+                                                    }
+                                                }
+                                            }}
+                                            className="w-full p-3 border rounded text-base bg-white"
+                                        >
+                                            <option value="">🔍 Cerca nel database o inserisci sotto</option>
+                                            {ingredientiDB.map(ingDB => (
+                                                <option key={ingDB.id} value={ingDB.id}>{ingDB.nome}</option>
+                                            ))}
+                                        </select>
                                         <input
                                             type="text"
                                             placeholder="Nome ingrediente"
@@ -1137,6 +1183,28 @@
                                     <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-gray-800">Lista della Spesa</h2>
 
                                     <div className="bg-green-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 flex flex-col gap-2">
+                                        <select
+                                            value=""
+                                            onChange={(e) => {
+                                                if (e.target.value) {
+                                                    const ingDB = ingredientiDB.find(i => i.id === parseInt(e.target.value));
+                                                    if (ingDB) {
+                                                        setNuovoSpesa({
+                                                            nome: ingDB.nome,
+                                                            quantita: '100',
+                                                            unita: ingDB.unitaDefault,
+                                                            comprato: false
+                                                        });
+                                                    }
+                                                }
+                                            }}
+                                            className="w-full p-3 border rounded text-base bg-white"
+                                        >
+                                            <option value="">🔍 Cerca nel database o inserisci sotto</option>
+                                            {ingredientiDB.map(ingDB => (
+                                                <option key={ingDB.id} value={ingDB.id}>{ingDB.nome}</option>
+                                            ))}
+                                        </select>
                                         <input
                                             type="text"
                                             placeholder="Cosa comprare"
@@ -1230,19 +1298,48 @@
                                         </div>
 
                                         <div className="mb-3">
-                                            <label className="text-xs text-gray-600 block mb-1">Scegli una ricetta (opzionale)</label>
+                                            <label className="text-xs text-gray-600 block mb-1">🔍 Cerca ricetta o ingrediente dal database</label>
                                             <select
                                                 value={nuovoPasto.ricettaId || ''}
                                                 onChange={(e) => selezionaRicettaTracking(e.target.value)}
-                                                className="w-full p-3 border rounded text-base bg-white"
+                                                className="w-full p-3 border rounded text-base bg-white mb-2"
                                             >
-                                                <option value="">Inserimento manuale</option>
+                                                <option value="">-- Scegli ricetta completa --</option>
                                                 {ricette.map(ricetta => (
                                                     <option key={ricetta.id} value={ricetta.id}>
-                                                        {ricetta.nome} {ricetta.grammiPorzione ? `(${ricetta.grammiPorzione}g)` : '(100g)'}
+                                                        📖 {ricetta.nome} {ricetta.grammiPorzione ? `(${ricetta.grammiPorzione}g)` : '(100g)'}
                                                     </option>
                                                 ))}
                                             </select>
+                                            <select
+                                                value=""
+                                                onChange={(e) => {
+                                                    if (e.target.value) {
+                                                        const ingDB = ingredientiDB.find(i => i.id === parseInt(e.target.value));
+                                                        if (ingDB) {
+                                                            const macroCalcolati = calcolaMacroDaGrammi({ macro: ingDB.macro }, 100);
+                                                            setNuovoPasto({
+                                                                ...nuovoPasto,
+                                                                nome: ingDB.nome,
+                                                                quantita: '100',
+                                                                unita: ingDB.unitaDefault,
+                                                                macro: macroCalcolati,
+                                                                isRicetta: false,
+                                                                ricettaId: null
+                                                            });
+                                                        }
+                                                    }
+                                                }}
+                                                className="w-full p-3 border rounded text-base bg-white"
+                                            >
+                                                <option value="">-- Scegli ingrediente singolo --</option>
+                                                {ingredientiDB.map(ingDB => (
+                                                    <option key={ingDB.id} value={ingDB.id}>
+                                                        🥕 {ingDB.nome} ({ingDB.unitaDefault})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <p className="text-xs text-gray-500 mt-1">Oppure inserisci manualmente qui sotto ↓</p>
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
