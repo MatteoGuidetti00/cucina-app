@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionale Cucina & Dieta</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Icone SVG
+        const Plus = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        );
+
+        const Trash2 = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+        );
+
+        const ShoppingCart = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+        );
+
+        const Dice3 = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8" cy="8" r="1"></circle>
+                <circle cx="12" cy="12" r="1"></circle>
+                <circle cx="16" cy="16" r="1"></circle>
+            </svg>
+        );
+
+        const Download = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+        );
+
+        const Upload = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+        );
+
+        const Edit2 = () => (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+            </svg>
+        );
+
+        const Check = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        );
+
+        const X = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        );
+
+        function CucinaApp() {
+            const [activeTab, setActiveTab] = useState('ricette');
+            const [ricette, setRicette] = useState([]);
+            const [inventario, setInventario] = useState([]);
+            const [listaSpesa, setListaSpesa] = useState([]);
+            const [pasti, setPasti] = useState([]);
+            const [editingId, setEditingId] = useState(null);
+
+            // Carica dati da localStorage all'avvio
+            useEffect(() => {
+                const savedData = localStorage.getItem('cucinaAppData');
+                if (savedData) {
+                    try {
+                        const data = JSON.parse(savedData);
+                        if (data.ricette) setRicette(data.ricette);
+                        if (data.inventario) setInventario(data.inventario);
+                        if (data.listaSpesa) setListaSpesa(data.listaSpesa);
+                        if (data.pasti) setPasti(data.pasti);
+                    } catch (e) {
+                        console.error('Errore nel caricamento dei dati:', e);
+                    }
+                }
+            }, []);
+
+            // Salva dati in localStorage quando cambiano
+            useEffect(() => {
+                const data = { ricette, inventario, listaSpesa, pasti };
+                localStorage.setItem('cucinaAppData', JSON.stringify(data));
+            }, [ricette, inventario, listaSpesa, pasti]);
+
+            const [nuovaRicetta, setNuovaRicetta] = useState({
+                nome: '',
+                ingredienti: [{ nome: '', quantita: '', unita: 'g' }],
+                istruzioni: '',
+                macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' }
+            });
+
+            const unitaMisura = ['g', 'kg', 'ml', 'l', 'cucchiaio', 'cucchiaino', 'tazza', 'pz', 'fetta', 'spicchio'];
+
+            const aggiungiRicetta = () => {
+                if (!nuovaRicetta.nome) return;
+                
+                const ricetta = {
+                    id: Date.now(),
+                    ...nuovaRicetta,
+                    ingredienti: nuovaRicetta.ingredienti.filter(i => i.nome && i.quantita)
+                };
+                
+                setRicette([...ricette, ricetta]);
+                setNuovaRicetta({
+                    nome: '',
+                    ingredienti: [{ nome: '', quantita: '', unita: 'g' }],
+                    istruzioni: '',
+                    macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' }
+                });
+            };
+
+            const eliminaRicetta = (id) => {
+                setRicette(ricette.filter(r => r.id !== id));
+            };
+
+            const aggiungiIngredienteRicetta = () => {
+                setNuovaRicetta({
+                    ...nuovaRicetta,
+                    ingredienti: [...nuovaRicetta.ingredienti, { nome: '', quantita: '', unita: 'g' }]
+                });
+            };
+
+            const rimuoviIngredienteRicetta = (index) => {
+                const nuoviIng = [...nuovaRicetta.ingredienti];
+                nuoviIng.splice(index, 1);
+                setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
+            };
+
+            const [nuovoItem, setNuovoItem] = useState({ nome: '', quantita: '', unita: 'g' });
+
+            const aggiungiInventario = () => {
+                if (!nuovoItem.nome || !nuovoItem.quantita) return;
+                
+                setInventario([...inventario, { id: Date.now(), ...nuovoItem }]);
+                setNuovoItem({ nome: '', quantita: '', unita: 'g' });
+            };
+
+            const eliminaInventario = (id) => {
+                setInventario(inventario.filter(i => i.id !== id));
+            };
+
+            const modificaInventario = (id, campo, valore) => {
+                setInventario(inventario.map(i => 
+                    i.id === id ? { ...i, [campo]: valore } : i
+                ));
+            };
+
+            const [nuovoSpesa, setNuovoSpesa] = useState({ nome: '', quantita: '', unita: 'pz' });
+
+            const aggiungiSpesa = () => {
+                if (!nuovoSpesa.nome) return;
+                
+                setListaSpesa([...listaSpesa, { id: Date.now(), ...nuovoSpesa, comprato: false }]);
+                setNuovoSpesa({ nome: '', quantita: '', unita: 'pz' });
+            };
+
+            const toggleComprato = (id) => {
+                setListaSpesa(listaSpesa.map(s => 
+                    s.id === id ? { ...s, comprato: !s.comprato } : s
+                ));
+            };
+
+            const eliminaSpesa = (id) => {
+                setListaSpesa(listaSpesa.filter(s => s.id !== id));
+            };
+
+            const generaListaSpesaDaRicetta = (ricetta) => {
+                const nuoviArticoli = [];
+                ricetta.ingredienti.forEach(ing => {
+                    const esisteInInventario = inventario.some(i => 
+                        i.nome.toLowerCase() === ing.nome.toLowerCase()
+                    );
+                    
+                    const esisteInSpesa = listaSpesa.some(s => 
+                        s.nome.toLowerCase() === ing.nome.toLowerCase()
+                    );
+                    
+                    if (!esisteInInventario && !esisteInSpesa) {
+                        nuoviArticoli.push({
+                            id: Date.now() + Math.random(),
+                            nome: ing.nome,
+                            quantita: ing.quantita,
+                            unita: ing.unita,
+                            comprato: false
+                        });
+                    }
+                });
+                
+                if (nuoviArticoli.length > 0) {
+                    setListaSpesa([...listaSpesa, ...nuoviArticoli]);
+                    alert(`Aggiunti ${nuoviArticoli.length} ingredienti alla lista spesa!`);
+                } else {
+                    alert('Hai già tutti gli ingredienti!');
+                }
+            };
+
+            const ricettaRandom = () => {
+                const ricetteFattibili = ricette.filter(ricetta => {
+                    return ricetta.ingredienti.every(ing => 
+                        inventario.some(inv => 
+                            inv.nome.toLowerCase() === ing.nome.toLowerCase()
+                        )
+                    );
+                });
+
+                if (ricetteFattibili.length === 0) {
+                    alert('Non hai ingredienti per nessuna ricetta! 😢');
+                    return;
+                }
+
+                const random = ricetteFattibili[Math.floor(Math.random() * ricetteFattibili.length)];
+                alert(`🎲 Oggi cucini: ${random.nome}!`);
+            };
+
+            const [nuovoPasto, setNuovoPasto] = useState({
+                data: new Date().toISOString().split('T')[0],
+                nome: '',
+                quantita: '',
+                unita: 'g',
+                macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' }
+            });
+
+            const aggiungiPasto = () => {
+                if (!nuovoPasto.nome) return;
+                
+                setPasti([...pasti, { id: Date.now(), ...nuovoPasto }]);
+                setNuovoPasto({
+                    data: new Date().toISOString().split('T')[0],
+                    nome: '',
+                    quantita: '',
+                    unita: 'g',
+                    macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' }
+                });
+            };
+
+            const eliminaPasto = (id) => {
+                setPasti(pasti.filter(p => p.id !== id));
+            };
+
+            const usaRicetta = (ricetta) => {
+                setNuovoPasto({
+                    ...nuovoPasto,
+                    nome: ricetta.nome,
+                    quantita: '1',
+                    unita: 'porzione',
+                    macro: ricetta.macro
+                });
+                setActiveTab('tracking');
+            };
+
+            const totaliGiornalieri = (data) => {
+                const pastiDelGiorno = pasti.filter(p => p.data === data);
+                return pastiDelGiorno.reduce((acc, p) => ({
+                    calorie: acc.calorie + (parseFloat(p.macro.calorie) || 0),
+                    proteine: acc.proteine + (parseFloat(p.macro.proteine) || 0),
+                    carboidrati: acc.carboidrati + (parseFloat(p.macro.carboidrati) || 0),
+                    grassi: acc.grassi + (parseFloat(p.macro.grassi) || 0)
+                }), { calorie: 0, proteine: 0, carboidrati: 0, grassi: 0 });
+            };
+
+            const esportaDati = () => {
+                const dati = { ricette, inventario, listaSpesa, pasti };
+                const blob = new Blob([JSON.stringify(dati, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `cucina-backup-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+            };
+
+            const importaDati = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const dati = JSON.parse(event.target.result);
+                        if (dati.ricette) setRicette(dati.ricette);
+                        if (dati.inventario) setInventario(dati.inventario);
+                        if (dati.listaSpesa) setListaSpesa(dati.listaSpesa);
+                        if (dati.pasti) setPasti(dati.pasti);
+                        alert('Dati importati con successo! ✅');
+                    } catch (error) {
+                        alert('Errore nell\'importazione del file');
+                    }
+                };
+                reader.readAsText(file);
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                                <h1 className="text-3xl font-bold text-orange-600">🍳 Gestionale Cucina</h1>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={ricettaRandom}
+                                        className="flex items-center gap-2 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition"
+                                    >
+                                        <Dice3 />
+                                        Random
+                                    </button>
+                                    <button
+                                        onClick={esportaDati}
+                                        className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+                                    >
+                                        <Download />
+                                        Esporta
+                                    </button>
+                                    <label className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition cursor-pointer">
+                                        <Upload />
+                                        Importa
+                                        <input type="file" accept=".json" onChange={importaDati} className="hidden" />
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-lg shadow-lg mb-6 overflow-x-auto">
+                            <div className="flex border-b min-w-max">
+                                {['ricette', 'inventario', 'spesa', 'tracking'].map(tab => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab)}
+                                        className={`px-6 py-3 font-semibold capitalize ${
+                                            activeTab === tab
+                                                ? 'border-b-2 border-orange-500 text-orange-600'
+                                                : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                    >
+                                        {tab === 'spesa' ? 'Lista Spesa' : tab}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-lg shadow-lg p-6">
+                            {activeTab === 'ricette' && (
+                                <div>
+                                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Le Mie Ricette</h2>
+                                    
+                                    <div className="bg-orange-50 p-4 rounded-lg mb-6">
+                                        <h3 className="font-semibold mb-3">Aggiungi Ricetta</h3>
+                                        <input
+                                            type="text"
+                                            placeholder="Nome ricetta"
+                                            value={nuovaRicetta.nome}
+                                            onChange={(e) => setNuovaRicetta({ ...nuovaRicetta, nome: e.target.value })}
+                                            className="w-full p-2 border rounded mb-3"
+                                        />
+                                        
+                                        <div className="mb-3">
+                                            <label className="font-semibold block mb-2">Ingredienti:</label>
+                                            {nuovaRicetta.ingredienti.map((ing, idx) => (
+                                                <div key={idx} className="flex gap-2 mb-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Nome"
+                                                        value={ing.nome}
+                                                        onChange={(e) => {
+                                                            const nuoviIng = [...nuovaRicetta.ingredienti];
+                                                            nuoviIng[idx].nome = e.target.value;
+                                                            setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
+                                                        }}
+                                                        className="flex-1 p-2 border rounded"
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Qtà"
+                                                        value={ing.quantita}
+                                                        onChange={(e) => {
+                                                            const nuoviIng = [...nuovaRicetta.ingredienti];
+                                                            nuoviIng[idx].quantita = e.target.value;
+                                                            setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
+                                                        }}
+                                                        className="w-24 p-2 border rounded"
+                                                    />
+                                                    <select
+                                                        value={ing.unita}
+                                                        onChange={(e) => {
+                                                            const nuoviIng = [...nuovaRicetta.ingredienti];
+                                                            nuoviIng[idx].unita = e.target.value;
+                                                            setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
+                                                        }}
+                                                        className="w-32 p-2 border rounded"
+                                                    >
+                                                        {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                                    </select>
+                                                    {idx > 0 && (
+                                                        <button
+                                                            onClick={() => rimuoviIngredienteRicetta(idx)}
+                                                            className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
+                                                        >
+                                                            <X />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            <button
+                                                onClick={aggiungiIngredienteRicetta}
+                                                className="text-orange-600 hover:text-orange-700 text-sm"
+                                            >
+                                                + Aggiungi ingrediente
+                                            </button>
+                                        </div>
+
+                                        <textarea
+                                            placeholder="Istruzioni di preparazione..."
+                                            value={nuovaRicetta.istruzioni}
+                                            onChange={(e) => setNuovaRicetta({ ...nuovaRicetta, istruzioni: e.target.value })}
+                                            className="w-full p-2 border rounded mb-3 h-24"
+                                        />
+
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+                                            <input
+                                                type="number"
+                                                placeholder="Calorie"
+                                                value={nuovaRicetta.macro.calorie}
+                                                onChange={(e) => setNuovaRicetta({
+                                                    ...nuovaRicetta,
+                                                    macro: { ...nuovaRicetta.macro, calorie: e.target.value }
+                                                })}
+                                                className="p-2 border rounded"
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder="Proteine (g)"
+                                                value={nuovaRicetta.macro.proteine}
+                                                onChange={(e) => setNuovaRicetta({
+                                                    ...nuovaRicetta,
+                                                    macro: { ...nuovaRicetta.macro, proteine: e.target.value }
+                                                })}
+                                                className="p-2 border rounded"
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder="Carbo (g)"
+                                                value={nuovaRicetta.macro.carboidrati}
+                                                onChange={(e) => setNuovaRicetta({
+                                                    ...nuovaRicetta,
+                                                    macro: { ...nuovaRicetta.macro, carboidrati: e.target.value }
+                                                })}
+                                                className="p-2 border rounded"
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder="Grassi (g)"
+                                                value={nuovaRicetta.macro.grassi}
+                                                onChange={(e) => setNuovaRicetta({
+                                                    ...nuovaRicetta,
+                                                    macro: { ...nuovaRicetta.macro, grassi: e.target.value }
+                                                })}
+                                                className="p-2 border rounded"
+                                            />
+                                        </div>
+
+                                        <button
+                                            onClick={aggiungiRicetta}
+                                            className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition"
+                                        >
+                                            Aggiungi Ricetta
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {ricette.map(ricetta => (
+                                            <div key={ricetta.id} className="border rounded-lg p-4 hover:shadow-md transition">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <h3 className="text-xl font-semibold text-gray-800">{ricetta.nome}</h3>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => usaRicetta(ricetta)}
+                                                            className="text-green-600 hover:text-green-700"
+                                                            title="Usa per tracking"
+                                                        >
+                                                            <Plus />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => generaListaSpesaDaRicetta(ricetta)}
+                                                            className="text-blue-600 hover:text-blue-700"
+                                                            title="Aggiungi a spesa"
+                                                        >
+                                                            <ShoppingCart />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => eliminaRicetta(ricetta.id)}
+                                                            className="text-red-600 hover:text-red-700"
+                                                        >
+                                                            <Trash2 />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="mb-2">
+                                                    <p className="font-semibold text-sm text-gray-600">Ingredienti:</p>
+                                                    <ul className="text-sm text-gray-700">
+                                                        {ricetta.ingredienti.map((ing, idx) => (
+                                                            <li key={idx}>• {ing.nome}: {ing.quantita} {ing.unita}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+
+                                                {ricetta.istruzioni && (
+                                                    <p className="text-sm text-gray-600 mb-2">{ricetta.istruzioni}</p>
+                                                )}
+
+                                                <div className="flex flex-wrap gap-2 text-sm">
+                                                    <span className="bg-red-100 text-red-700 px-2 py-1 rounded">
+                                                        {ricetta.macro.calorie} kcal
+                                                    </span>
+                                                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                                        P: {ricetta.macro.proteine}g
+                                                    </span>
+                                                    <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
+                                                        C: {ricetta.macro.carboidrati}g
+                                                    </span>
+                                                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
+                                                        G: {ricetta.macro.grassi}g
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'inventario' && (
+                                <div>
+                                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Inventario Ingredienti</h2>
+                                    
+                                    <div className="bg-blue-50 p-4 rounded-lg mb-6 flex flex-col md:flex-row gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Nome ingrediente"
+                                            value={nuovoItem.nome}
+                                            onChange={(e) => setNuovoItem({ ...nuovoItem, nome: e.target.value })}
+                                            className="flex-1 p-2 border rounded"
+                                        />
+                                        <input
+                                            type="number"
+                                            placeholder="Quantità"
+                                            value={nuovoItem.quantita}
+                                            onChange={(e) => setNuovoItem({ ...nuovoItem, quantita: e.target.value })}
+                                            className="w-32 p-2 border rounded"
+                                        />
+                                        <select
+                                            value={nuovoItem.unita}
+                                            onChange={(e) => setNuovoItem({ ...nuovoItem, unita: e.target.value })}
+                                            className="w-32 p-2 border rounded"
+                                        >
+                                            {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                        </select>
+                                        <button
+                                            onClick={aggiungiInventario}
+                                            className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition"
+                                        >
+                                            Aggiungi
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {inventario.map(item => (
+                                            <div key={item.id} className="border rounded-lg p-4 hover:shadow-md transition">
+                                                {editingId === item.id ? (
+                                                    <div className="space-y-2">
+                                                        <input
+                                                            type="text"
+                                                            value={item.nome}
+                                                            onChange={(e) => modificaInventario(item.id, 'nome', e.target.value)}
+                                                            className="w-full p-2 border rounded"
+                                                        />
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="number"
+                                                                value={item.quantita}
+                                                                onChange={(e) => modificaInventario(item.id, 'quantita', e.target.value)}
+                                                                className="flex-1 p-2 border rounded"
+                                                            />
+                                                            <select
+                                                                value={item.unita}
+                                                                onChange={(e) => modificaInventario(item.id, 'unita', e.target.value)}
+                                                                className="p-2 border rounded"
+                                                            >
+                                                                {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                                            </select>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => setEditingId(null)}
+                                                            className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 flex items-center justify-center"
+                                                        >
+                                                            <Check />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex justify-between items-center">
+                                                        <div>
+                                                            <h3 className="font-semibold text-gray-800">{item.nome}</h3>
+                                                            <p className="text-sm text-gray-600">{item.quantita} {item.unita}</p>
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => setEditingId(item.id)}
+                                                                className="text-blue-600 hover:text-blue-700"
+                                                            >
+                                                                <Edit2 />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => eliminaInventario(item.id)}
+                                                                className="text-red-600 hover:text-red-700"
+                                                            >
+                                                                <Trash2 />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'spesa' && (
+                                <div>
+                                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Lista della Spesa</h2>
+                                    
+                                    <div className="bg-green-50 p-4 rounded-lg mb-6 flex flex-col md:flex-row gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Cosa comprare"
+                                            value={nuovoSpesa.nome}
+                                            onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, nome: e.target.value })}
+                                            className="flex-1 p-2 border rounded"
+                                        />
+                                        <input
+                                            type="number"
+                                            placeholder="Quantità"
+                                            value={nuovoSpesa.quantita}
+                                            onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, quantita: e.target.value })}
+                                            className="w-32 p-2 border rounded"
+                                        />
+                                        <select
+                                            value={nuovoSpesa.unita}
+                                            onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, unita: e.target.value })}
+                                            className="w-32 p-2 border rounded"
+                                        >
+                                            {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                        </select>
+                                        <button
+                                            onClick={aggiungiSpesa}
+                                            className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition"
+                                        >
+                                            Aggiungi
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        {listaSpesa.map(item => (
+                                            <div
+                                                key={item.id}
+                                                className={`flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition ${
+                                                    item.comprato ? 'bg-gray-50 opacity-60' : 'bg-white'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3 flex-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={item.comprato}
+                                                        onChange={() => toggleComprato(item.id)}
+                                                        className="w-5 h-5 cursor-pointer"
+                                                    />
+                                                    <div className={item.comprato ? 'line-through text-gray-500' : ''}>
+                                                        <span className="font-semibold">{item.nome}</span>
+                                                        {item.quantita && (
+                                                            <span className="text-sm text-gray-600 ml-2">
+                                                                ({item.quantita} {item.unita})
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => eliminaSpesa(item.id)}
+                                                    className="text-red-600 hover:text-red-700"
+                                                >
+                                                    <Trash2 />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'tracking' && (
+                                <div>
+                                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Tracking Pasti</h2>
+                                    
+                                    <div className="bg-purple-50 p-4 rounded-lg mb-6">
+                                        <h3 className="font-semibold mb-3">Registra Pasto</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                            <input
+                                                type="date"
+                                                value={nuovoPasto.data}
+                                                onChange={(e) => setNuovoPasto({ ...nuovoPasto, data: e.target.value })}
+                                                className="p-2 border rounded"
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Nome pasto/alimento"
+                                                value={nuovoPasto.nome}
+                                                onChange={(e) => setNuovoPasto({ ...nuovoPasto, nome: e.target.value })}
+                                                className="p-2 border rounded"
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder="Quantità"
+                                                value={nuovoPasto.quantita}
+                                                onChange={(e) => setNuovoPasto({ ...nuovoPasto, quantita: e.target.value })}
+                                                className="p-2 border rounded"
+                                            />
+                                            <select
+                                                value={nuovoPasto.unita}
+                                                onChange={(e) => setNuovoPasto({ ...nuovoPasto, unita: e.target.value })}
+                                                className="p-2 border rounded"
+                                            >
+                                                <option value="porzione">porzione</option>
+                                                {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                            </select>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+                                            <input
+                                                type="number"
+                                                placeholder="Calorie"
+                                                value={nuovoPasto.macro.calorie}
+                                                onChange={(e) => setNuovoPasto({
+                                                    ...nuovoPasto,
+                                                    macro: { ...nuovoPasto.macro, calorie: e.target.value }
+                                                })}
+                                                className="p-2 border rounded"
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder="Proteine (g)"
+                                                value={nuovoPasto.macro.proteine}
+                                                onChange={(e) => setNuovoPasto({
+                                                    ...nuovoPasto,
+                                                    macro: { ...nuovoPasto.macro, proteine: e.target.value }
+                                                })}
+                                                className="p-2 border rounded"
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder="Carbo (g)"
+                                                value={nuovoPasto.macro.carboidrati}
+                                                onChange={(e) => setNuovoPasto({
+                                                    ...nuovoPasto,
+                                                    macro: { ...nuovoPasto.macro, carboidrati: e.target.value }
+                                                })}
+                                                className="p-2 border rounded"
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder="Grassi (g)"
+                                                value={nuovoPasto.macro.grassi}
+                                                onChange={(e) => setNuovoPasto({
+                                                    ...nuovoPasto,
+                                                    macro: { ...nuovoPasto.macro, grassi: e.target.value }
+                                                })}
+                                                className="p-2 border rounded"
+                                            />
+                                        </div>
+
+                                        <button
+                                            onClick={aggiungiPasto}
+                                            className="w-full bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition"
+                                        >
+                                            Registra Pasto
+                                        </button>
+                                    </div>
+
+                                    {pasti.length > 0 && (
+                                        <div className="mb-6 p-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg">
+                                            <h3 className="font-semibold mb-2">Totale di oggi:</h3>
+                                            {(() => {
+                                                const oggi = new Date().toISOString().split('T')[0];
+                                                const totali = totaliGiornalieri(oggi);
+                                                return (
+                                                    <div className="flex flex-wrap gap-3">
+                                                        <div className="bg-white px-4 py-2 rounded-lg shadow">
+                                                            <span className="text-sm text-gray-600">Calorie</span>
+                                                            <p className="text-xl font-bold text-red-600">{totali.calorie.toFixed(0)}</p>
+                                                        </div>
+                                                        <div className="bg-white px-4 py-2 rounded-lg shadow">
+                                                            <span className="text-sm text-gray-600">Proteine</span>
+                                                            <p className="text-xl font-bold text-blue-600">{totali.proteine.toFixed(1)}g</p>
+                                                        </div>
+                                                        <div className="bg-white px-4 py-2 rounded-lg shadow">
+                                                            <span className="text-sm text-gray-600">Carboidrati</span>
+                                                            <p className="text-xl font-bold text-yellow-600">{totali.carboidrati.toFixed(1)}g</p>
+                                                        </div>
+                                                        <div className="bg-white px-4 py-2 rounded-lg shadow">
+                                                            <span className="text-sm text-gray-600">Grassi</span>
+                                                            <p className="text-xl font-bold text-green-600">{totali.grassi.toFixed(1)}g</p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-3">
+                                        {[...pasti].reverse().map(pasto => (
+                                            <div key={pasto.id} className="border rounded-lg p-4 hover:shadow-md transition">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <h3 className="font-semibold text-gray-800">{pasto.nome}</h3>
+                                                        <p className="text-sm text-gray-500">
+                                                            {new Date(pasto.data + 'T00:00:00').toLocaleDateString('it-IT')} • {pasto.quantita} {pasto.unita}
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => eliminaPasto(pasto.id)}
+                                                        className="text-red-600 hover:text-red-700"
+                                                    >
+                                                        <Trash2 />
+                                                    </button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2 text-sm">
+                                                    <span className="bg-red-100 text-red-700 px-2 py-1 rounded">
+                                                        {pasto.macro.calorie} kcal
+                                                    </span>
+                                                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                                        P: {pasto.macro.proteine}g
+                                                    </span>
+                                                    <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
+                                                        C: {pasto.macro.carboidrati}g
+                                                    </span>
+                                                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
+                                                        G: {pasto.macro.grassi}g
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<CucinaApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
