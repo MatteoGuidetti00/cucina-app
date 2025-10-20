@@ -16,6 +16,28 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
+
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+            /* Larger touch targets for mobile */
+            button, input, select {
+                min-height: 44px;
+            }
+
+            /* Smoother scrolling on mobile */
+            * {
+                -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+            }
+        }
+
+        /* Hide scrollbar on tab container */
+        .tab-container::-webkit-scrollbar {
+            display: none;
+        }
+        .tab-container {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
 <body>
@@ -328,42 +350,42 @@
             };
 
             return (
-                <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4">
+                <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-2 sm:p-4">
                     <div className="max-w-6xl mx-auto">
-                        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-                            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                                <h1 className="text-3xl font-bold text-orange-600">🍳 Gestionale Cucina</h1>
-                                <div className="flex gap-2">
+                        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6 mb-4 sm:mb-6">
+                            <div className="flex flex-col gap-3">
+                                <h1 className="text-2xl sm:text-3xl font-bold text-orange-600 text-center sm:text-left">🍳 Gestionale Cucina</h1>
+                                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                                     <button
                                         onClick={ricettaRandom}
-                                        className="flex items-center gap-2 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition"
+                                        className="flex items-center gap-2 bg-purple-500 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-purple-600 transition text-sm sm:text-base min-h-[44px]"
                                     >
                                         <Dice3 />
-                                        Random
+                                        <span className="hidden xs:inline">Random</span>
                                     </button>
                                     <button
                                         onClick={esportaDati}
-                                        className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+                                        className="flex items-center gap-2 bg-blue-500 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm sm:text-base min-h-[44px]"
                                     >
                                         <Download />
-                                        Esporta
+                                        <span className="hidden xs:inline">Esporta</span>
                                     </button>
-                                    <label className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition cursor-pointer">
+                                    <label className="flex items-center gap-2 bg-green-500 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-green-600 transition cursor-pointer text-sm sm:text-base min-h-[44px]">
                                         <Upload />
-                                        Importa
+                                        <span className="hidden xs:inline">Importa</span>
                                         <input type="file" accept=".json" onChange={importaDati} className="hidden" />
                                     </label>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-lg shadow-lg mb-6 overflow-x-auto">
-                            <div className="flex border-b min-w-max">
+                        <div className="bg-white rounded-lg shadow-lg mb-4 sm:mb-6 overflow-hidden">
+                            <div className="flex overflow-x-auto tab-container border-b">
                                 {['ricette', 'inventario', 'spesa', 'tracking'].map(tab => (
                                     <button
                                         key={tab}
                                         onClick={() => setActiveTab(tab)}
-                                        className={`px-6 py-3 font-semibold capitalize ${
+                                        className={`px-4 sm:px-6 py-3 font-semibold capitalize whitespace-nowrap flex-shrink-0 min-h-[44px] ${
                                             activeTab === tab
                                                 ? 'border-b-2 border-orange-500 text-orange-600'
                                                 : 'text-gray-500 hover:text-gray-700'
@@ -375,25 +397,25 @@
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-lg shadow-lg p-6">
+                        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
                             {activeTab === 'ricette' && (
                                 <div>
-                                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Le Mie Ricette</h2>
-                                    
-                                    <div className="bg-orange-50 p-4 rounded-lg mb-6">
-                                        <h3 className="font-semibold mb-3">Aggiungi Ricetta</h3>
+                                    <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-gray-800">Le Mie Ricette</h2>
+
+                                    <div className="bg-orange-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
+                                        <h3 className="font-semibold mb-3 text-sm sm:text-base">Aggiungi Ricetta</h3>
                                         <input
                                             type="text"
                                             placeholder="Nome ricetta"
                                             value={nuovaRicetta.nome}
                                             onChange={(e) => setNuovaRicetta({ ...nuovaRicetta, nome: e.target.value })}
-                                            className="w-full p-2 border rounded mb-3"
+                                            className="w-full p-3 border rounded mb-3 text-base"
                                         />
                                         
                                         <div className="mb-3">
-                                            <label className="font-semibold block mb-2">Ingredienti:</label>
+                                            <label className="font-semibold block mb-2 text-sm sm:text-base">Ingredienti:</label>
                                             {nuovaRicetta.ingredienti.map((ing, idx) => (
-                                                <div key={idx} className="flex gap-2 mb-2">
+                                                <div key={idx} className="flex flex-col sm:flex-row gap-2 mb-2">
                                                     <input
                                                         type="text"
                                                         placeholder="Nome"
@@ -403,43 +425,45 @@
                                                             nuoviIng[idx].nome = e.target.value;
                                                             setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
                                                         }}
-                                                        className="flex-1 p-2 border rounded"
+                                                        className="flex-1 p-3 border rounded text-base"
                                                     />
-                                                    <input
-                                                        type="number"
-                                                        placeholder="Qtà"
-                                                        value={ing.quantita}
-                                                        onChange={(e) => {
-                                                            const nuoviIng = [...nuovaRicetta.ingredienti];
-                                                            nuoviIng[idx].quantita = e.target.value;
-                                                            setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
-                                                        }}
-                                                        className="w-24 p-2 border rounded"
-                                                    />
-                                                    <select
-                                                        value={ing.unita}
-                                                        onChange={(e) => {
-                                                            const nuoviIng = [...nuovaRicetta.ingredienti];
-                                                            nuoviIng[idx].unita = e.target.value;
-                                                            setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
-                                                        }}
-                                                        className="w-32 p-2 border rounded"
-                                                    >
-                                                        {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
-                                                    </select>
-                                                    {idx > 0 && (
-                                                        <button
-                                                            onClick={() => rimuoviIngredienteRicetta(idx)}
-                                                            className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Qtà"
+                                                            value={ing.quantita}
+                                                            onChange={(e) => {
+                                                                const nuoviIng = [...nuovaRicetta.ingredienti];
+                                                                nuoviIng[idx].quantita = e.target.value;
+                                                                setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
+                                                            }}
+                                                            className="w-24 p-3 border rounded text-base"
+                                                        />
+                                                        <select
+                                                            value={ing.unita}
+                                                            onChange={(e) => {
+                                                                const nuoviIng = [...nuovaRicetta.ingredienti];
+                                                                nuoviIng[idx].unita = e.target.value;
+                                                                setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
+                                                            }}
+                                                            className="flex-1 sm:w-32 p-3 border rounded text-base"
                                                         >
-                                                            <X />
-                                                        </button>
-                                                    )}
+                                                            {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                                        </select>
+                                                        {idx > 0 && (
+                                                            <button
+                                                                onClick={() => rimuoviIngredienteRicetta(idx)}
+                                                                className="p-3 bg-red-500 text-white rounded hover:bg-red-600 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                                                            >
+                                                                <X />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ))}
                                             <button
                                                 onClick={aggiungiIngredienteRicetta}
-                                                className="text-orange-600 hover:text-orange-700 text-sm"
+                                                className="text-orange-600 hover:text-orange-700 text-sm sm:text-base py-2 min-h-[44px]"
                                             >
                                                 + Aggiungi ingrediente
                                             </button>
@@ -449,7 +473,7 @@
                                             placeholder="Istruzioni di preparazione..."
                                             value={nuovaRicetta.istruzioni}
                                             onChange={(e) => setNuovaRicetta({ ...nuovaRicetta, istruzioni: e.target.value })}
-                                            className="w-full p-2 border rounded mb-3 h-24"
+                                            className="w-full p-3 border rounded mb-3 h-24 text-base"
                                         />
 
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
@@ -461,7 +485,7 @@
                                                     ...nuovaRicetta,
                                                     macro: { ...nuovaRicetta.macro, calorie: e.target.value }
                                                 })}
-                                                className="p-2 border rounded"
+                                                className="p-3 border rounded text-base"
                                             />
                                             <input
                                                 type="number"
@@ -471,7 +495,7 @@
                                                     ...nuovaRicetta,
                                                     macro: { ...nuovaRicetta.macro, proteine: e.target.value }
                                                 })}
-                                                className="p-2 border rounded"
+                                                className="p-3 border rounded text-base"
                                             />
                                             <input
                                                 type="number"
@@ -481,7 +505,7 @@
                                                     ...nuovaRicetta,
                                                     macro: { ...nuovaRicetta.macro, carboidrati: e.target.value }
                                                 })}
-                                                className="p-2 border rounded"
+                                                className="p-3 border rounded text-base"
                                             />
                                             <input
                                                 type="number"
@@ -491,41 +515,41 @@
                                                     ...nuovaRicetta,
                                                     macro: { ...nuovaRicetta.macro, grassi: e.target.value }
                                                 })}
-                                                className="p-2 border rounded"
+                                                className="p-3 border rounded text-base"
                                             />
                                         </div>
 
                                         <button
                                             onClick={aggiungiRicetta}
-                                            className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition"
+                                            className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition min-h-[44px] text-base font-semibold"
                                         >
                                             Aggiungi Ricetta
                                         </button>
                                     </div>
 
-                                    <div className="space-y-4">
+                                    <div className="space-y-3 sm:space-y-4">
                                         {ricette.map(ricetta => (
-                                            <div key={ricetta.id} className="border rounded-lg p-4 hover:shadow-md transition">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <h3 className="text-xl font-semibold text-gray-800">{ricetta.nome}</h3>
-                                                    <div className="flex gap-2">
+                                            <div key={ricetta.id} className="border rounded-lg p-3 sm:p-4 hover:shadow-md transition">
+                                                <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2 mb-2">
+                                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-800">{ricetta.nome}</h3>
+                                                    <div className="flex gap-2 flex-shrink-0">
                                                         <button
                                                             onClick={() => usaRicetta(ricetta)}
-                                                            className="text-green-600 hover:text-green-700"
+                                                            className="text-green-600 hover:text-green-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                                                             title="Usa per tracking"
                                                         >
                                                             <Plus />
                                                         </button>
                                                         <button
                                                             onClick={() => generaListaSpesaDaRicetta(ricetta)}
-                                                            className="text-blue-600 hover:text-blue-700"
+                                                            className="text-blue-600 hover:text-blue-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                                                             title="Aggiungi a spesa"
                                                         >
                                                             <ShoppingCart />
                                                         </button>
                                                         <button
                                                             onClick={() => eliminaRicetta(ricetta.id)}
-                                                            className="text-red-600 hover:text-red-700"
+                                                            className="text-red-600 hover:text-red-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                                                         >
                                                             <Trash2 />
                                                         </button>
@@ -567,67 +591,69 @@
 
                             {activeTab === 'inventario' && (
                                 <div>
-                                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Inventario Ingredienti</h2>
-                                    
-                                    <div className="bg-blue-50 p-4 rounded-lg mb-6 flex flex-col md:flex-row gap-2">
+                                    <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-gray-800">Inventario Ingredienti</h2>
+
+                                    <div className="bg-blue-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 flex flex-col gap-2">
                                         <input
                                             type="text"
                                             placeholder="Nome ingrediente"
                                             value={nuovoItem.nome}
                                             onChange={(e) => setNuovoItem({ ...nuovoItem, nome: e.target.value })}
-                                            className="flex-1 p-2 border rounded"
+                                            className="w-full p-3 border rounded text-base"
                                         />
-                                        <input
-                                            type="number"
-                                            placeholder="Quantità"
-                                            value={nuovoItem.quantita}
-                                            onChange={(e) => setNuovoItem({ ...nuovoItem, quantita: e.target.value })}
-                                            className="w-32 p-2 border rounded"
-                                        />
-                                        <select
-                                            value={nuovoItem.unita}
-                                            onChange={(e) => setNuovoItem({ ...nuovoItem, unita: e.target.value })}
-                                            className="w-32 p-2 border rounded"
-                                        >
-                                            {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
-                                        </select>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="number"
+                                                placeholder="Quantità"
+                                                value={nuovoItem.quantita}
+                                                onChange={(e) => setNuovoItem({ ...nuovoItem, quantita: e.target.value })}
+                                                className="flex-1 p-3 border rounded text-base"
+                                            />
+                                            <select
+                                                value={nuovoItem.unita}
+                                                onChange={(e) => setNuovoItem({ ...nuovoItem, unita: e.target.value })}
+                                                className="flex-1 p-3 border rounded text-base"
+                                            >
+                                                {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                            </select>
+                                        </div>
                                         <button
                                             onClick={aggiungiInventario}
-                                            className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition"
+                                            className="w-full bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition min-h-[44px] font-semibold"
                                         >
                                             Aggiungi
                                         </button>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                         {inventario.map(item => (
-                                            <div key={item.id} className="border rounded-lg p-4 hover:shadow-md transition">
+                                            <div key={item.id} className="border rounded-lg p-3 sm:p-4 hover:shadow-md transition">
                                                 {editingId === item.id ? (
                                                     <div className="space-y-2">
                                                         <input
                                                             type="text"
                                                             value={item.nome}
                                                             onChange={(e) => modificaInventario(item.id, 'nome', e.target.value)}
-                                                            className="w-full p-2 border rounded"
+                                                            className="w-full p-3 border rounded text-base"
                                                         />
                                                         <div className="flex gap-2">
                                                             <input
                                                                 type="number"
                                                                 value={item.quantita}
                                                                 onChange={(e) => modificaInventario(item.id, 'quantita', e.target.value)}
-                                                                className="flex-1 p-2 border rounded"
+                                                                className="flex-1 p-3 border rounded text-base"
                                                             />
                                                             <select
                                                                 value={item.unita}
                                                                 onChange={(e) => modificaInventario(item.id, 'unita', e.target.value)}
-                                                                className="p-2 border rounded"
+                                                                className="flex-1 p-3 border rounded text-base"
                                                             >
                                                                 {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
                                                             </select>
                                                         </div>
                                                         <button
                                                             onClick={() => setEditingId(null)}
-                                                            className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 flex items-center justify-center"
+                                                            className="w-full bg-green-500 text-white py-3 rounded hover:bg-green-600 flex items-center justify-center min-h-[44px] font-semibold"
                                                         >
                                                             <Check />
                                                         </button>
@@ -641,13 +667,13 @@
                                                         <div className="flex gap-2">
                                                             <button
                                                                 onClick={() => setEditingId(item.id)}
-                                                                className="text-blue-600 hover:text-blue-700"
+                                                                className="text-blue-600 hover:text-blue-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                                                             >
                                                                 <Edit2 />
                                                             </button>
                                                             <button
                                                                 onClick={() => eliminaInventario(item.id)}
-                                                                className="text-red-600 hover:text-red-700"
+                                                                className="text-red-600 hover:text-red-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                                                             >
                                                                 <Trash2 />
                                                             </button>
@@ -662,33 +688,35 @@
 
                             {activeTab === 'spesa' && (
                                 <div>
-                                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Lista della Spesa</h2>
-                                    
-                                    <div className="bg-green-50 p-4 rounded-lg mb-6 flex flex-col md:flex-row gap-2">
+                                    <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-gray-800">Lista della Spesa</h2>
+
+                                    <div className="bg-green-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 flex flex-col gap-2">
                                         <input
                                             type="text"
                                             placeholder="Cosa comprare"
                                             value={nuovoSpesa.nome}
                                             onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, nome: e.target.value })}
-                                            className="flex-1 p-2 border rounded"
+                                            className="w-full p-3 border rounded text-base"
                                         />
-                                        <input
-                                            type="number"
-                                            placeholder="Quantità"
-                                            value={nuovoSpesa.quantita}
-                                            onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, quantita: e.target.value })}
-                                            className="w-32 p-2 border rounded"
-                                        />
-                                        <select
-                                            value={nuovoSpesa.unita}
-                                            onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, unita: e.target.value })}
-                                            className="w-32 p-2 border rounded"
-                                        >
-                                            {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
-                                        </select>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="number"
+                                                placeholder="Quantità"
+                                                value={nuovoSpesa.quantita}
+                                                onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, quantita: e.target.value })}
+                                                className="flex-1 p-3 border rounded text-base"
+                                            />
+                                            <select
+                                                value={nuovoSpesa.unita}
+                                                onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, unita: e.target.value })}
+                                                className="flex-1 p-3 border rounded text-base"
+                                            >
+                                                {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                            </select>
+                                        </div>
                                         <button
                                             onClick={aggiungiSpesa}
-                                            className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition"
+                                            className="w-full bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition min-h-[44px] font-semibold"
                                         >
                                             Aggiungi
                                         </button>
@@ -698,21 +726,21 @@
                                         {listaSpesa.map(item => (
                                             <div
                                                 key={item.id}
-                                                className={`flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition ${
+                                                className={`flex items-center justify-between p-3 sm:p-4 border rounded-lg hover:shadow-md transition ${
                                                     item.comprato ? 'bg-gray-50 opacity-60' : 'bg-white'
                                                 }`}
                                             >
-                                                <div className="flex items-center gap-3 flex-1">
+                                                <div className="flex items-center gap-3 flex-1 min-h-[44px]">
                                                     <input
                                                         type="checkbox"
                                                         checked={item.comprato}
                                                         onChange={() => toggleComprato(item.id)}
-                                                        className="w-5 h-5 cursor-pointer"
+                                                        className="w-6 h-6 cursor-pointer flex-shrink-0"
                                                     />
                                                     <div className={item.comprato ? 'line-through text-gray-500' : ''}>
-                                                        <span className="font-semibold">{item.nome}</span>
+                                                        <span className="font-semibold text-sm sm:text-base">{item.nome}</span>
                                                         {item.quantita && (
-                                                            <span className="text-sm text-gray-600 ml-2">
+                                                            <span className="text-xs sm:text-sm text-gray-600 ml-2">
                                                                 ({item.quantita} {item.unita})
                                                             </span>
                                                         )}
@@ -720,7 +748,7 @@
                                                 </div>
                                                 <button
                                                     onClick={() => eliminaSpesa(item.id)}
-                                                    className="text-red-600 hover:text-red-700"
+                                                    className="text-red-600 hover:text-red-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0"
                                                 >
                                                     <Trash2 />
                                                 </button>
@@ -732,35 +760,35 @@
 
                             {activeTab === 'tracking' && (
                                 <div>
-                                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Tracking Pasti</h2>
-                                    
-                                    <div className="bg-purple-50 p-4 rounded-lg mb-6">
-                                        <h3 className="font-semibold mb-3">Registra Pasto</h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                    <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-gray-800">Tracking Pasti</h2>
+
+                                    <div className="bg-purple-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
+                                        <h3 className="font-semibold mb-3 text-sm sm:text-base">Registra Pasto</h3>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
                                             <input
                                                 type="date"
                                                 value={nuovoPasto.data}
                                                 onChange={(e) => setNuovoPasto({ ...nuovoPasto, data: e.target.value })}
-                                                className="p-2 border rounded"
+                                                className="p-3 border rounded text-base"
                                             />
                                             <input
                                                 type="text"
                                                 placeholder="Nome pasto/alimento"
                                                 value={nuovoPasto.nome}
                                                 onChange={(e) => setNuovoPasto({ ...nuovoPasto, nome: e.target.value })}
-                                                className="p-2 border rounded"
+                                                className="p-3 border rounded text-base"
                                             />
                                             <input
                                                 type="number"
                                                 placeholder="Quantità"
                                                 value={nuovoPasto.quantita}
                                                 onChange={(e) => setNuovoPasto({ ...nuovoPasto, quantita: e.target.value })}
-                                                className="p-2 border rounded"
+                                                className="p-3 border rounded text-base"
                                             />
                                             <select
                                                 value={nuovoPasto.unita}
                                                 onChange={(e) => setNuovoPasto({ ...nuovoPasto, unita: e.target.value })}
-                                                className="p-2 border rounded"
+                                                className="p-3 border rounded text-base"
                                             >
                                                 <option value="porzione">porzione</option>
                                                 {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
@@ -776,7 +804,7 @@
                                                     ...nuovoPasto,
                                                     macro: { ...nuovoPasto.macro, calorie: e.target.value }
                                                 })}
-                                                className="p-2 border rounded"
+                                                className="p-3 border rounded text-base"
                                             />
                                             <input
                                                 type="number"
@@ -786,7 +814,7 @@
                                                     ...nuovoPasto,
                                                     macro: { ...nuovoPasto.macro, proteine: e.target.value }
                                                 })}
-                                                className="p-2 border rounded"
+                                                className="p-3 border rounded text-base"
                                             />
                                             <input
                                                 type="number"
@@ -796,7 +824,7 @@
                                                     ...nuovoPasto,
                                                     macro: { ...nuovoPasto.macro, carboidrati: e.target.value }
                                                 })}
-                                                className="p-2 border rounded"
+                                                className="p-3 border rounded text-base"
                                             />
                                             <input
                                                 type="number"
@@ -806,41 +834,41 @@
                                                     ...nuovoPasto,
                                                     macro: { ...nuovoPasto.macro, grassi: e.target.value }
                                                 })}
-                                                className="p-2 border rounded"
+                                                className="p-3 border rounded text-base"
                                             />
                                         </div>
 
                                         <button
                                             onClick={aggiungiPasto}
-                                            className="w-full bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition"
+                                            className="w-full bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 transition min-h-[44px] font-semibold"
                                         >
                                             Registra Pasto
                                         </button>
                                     </div>
 
                                     {pasti.length > 0 && (
-                                        <div className="mb-6 p-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg">
-                                            <h3 className="font-semibold mb-2">Totale di oggi:</h3>
+                                        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg">
+                                            <h3 className="font-semibold mb-2 text-sm sm:text-base">Totale di oggi:</h3>
                                             {(() => {
                                                 const oggi = new Date().toISOString().split('T')[0];
                                                 const totali = totaliGiornalieri(oggi);
                                                 return (
-                                                    <div className="flex flex-wrap gap-3">
-                                                        <div className="bg-white px-4 py-2 rounded-lg shadow">
-                                                            <span className="text-sm text-gray-600">Calorie</span>
-                                                            <p className="text-xl font-bold text-red-600">{totali.calorie.toFixed(0)}</p>
+                                                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3">
+                                                        <div className="bg-white px-3 py-2 rounded-lg shadow">
+                                                            <span className="text-xs sm:text-sm text-gray-600">Calorie</span>
+                                                            <p className="text-lg sm:text-xl font-bold text-red-600">{totali.calorie.toFixed(0)}</p>
                                                         </div>
-                                                        <div className="bg-white px-4 py-2 rounded-lg shadow">
-                                                            <span className="text-sm text-gray-600">Proteine</span>
-                                                            <p className="text-xl font-bold text-blue-600">{totali.proteine.toFixed(1)}g</p>
+                                                        <div className="bg-white px-3 py-2 rounded-lg shadow">
+                                                            <span className="text-xs sm:text-sm text-gray-600">Proteine</span>
+                                                            <p className="text-lg sm:text-xl font-bold text-blue-600">{totali.proteine.toFixed(1)}g</p>
                                                         </div>
-                                                        <div className="bg-white px-4 py-2 rounded-lg shadow">
-                                                            <span className="text-sm text-gray-600">Carboidrati</span>
-                                                            <p className="text-xl font-bold text-yellow-600">{totali.carboidrati.toFixed(1)}g</p>
+                                                        <div className="bg-white px-3 py-2 rounded-lg shadow">
+                                                            <span className="text-xs sm:text-sm text-gray-600">Carboidrati</span>
+                                                            <p className="text-lg sm:text-xl font-bold text-yellow-600">{totali.carboidrati.toFixed(1)}g</p>
                                                         </div>
-                                                        <div className="bg-white px-4 py-2 rounded-lg shadow">
-                                                            <span className="text-sm text-gray-600">Grassi</span>
-                                                            <p className="text-xl font-bold text-green-600">{totali.grassi.toFixed(1)}g</p>
+                                                        <div className="bg-white px-3 py-2 rounded-lg shadow">
+                                                            <span className="text-xs sm:text-sm text-gray-600">Grassi</span>
+                                                            <p className="text-lg sm:text-xl font-bold text-green-600">{totali.grassi.toFixed(1)}g</p>
                                                         </div>
                                                     </div>
                                                 );
@@ -850,22 +878,22 @@
 
                                     <div className="space-y-3">
                                         {[...pasti].reverse().map(pasto => (
-                                            <div key={pasto.id} className="border rounded-lg p-4 hover:shadow-md transition">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div>
-                                                        <h3 className="font-semibold text-gray-800">{pasto.nome}</h3>
-                                                        <p className="text-sm text-gray-500">
+                                            <div key={pasto.id} className="border rounded-lg p-3 sm:p-4 hover:shadow-md transition">
+                                                <div className="flex justify-between items-start gap-2 mb-2">
+                                                    <div className="flex-1">
+                                                        <h3 className="font-semibold text-gray-800 text-sm sm:text-base">{pasto.nome}</h3>
+                                                        <p className="text-xs sm:text-sm text-gray-500">
                                                             {new Date(pasto.data + 'T00:00:00').toLocaleDateString('it-IT')} • {pasto.quantita} {pasto.unita}
                                                         </p>
                                                     </div>
                                                     <button
                                                         onClick={() => eliminaPasto(pasto.id)}
-                                                        className="text-red-600 hover:text-red-700"
+                                                        className="text-red-600 hover:text-red-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0"
                                                     >
                                                         <Trash2 />
                                                     </button>
                                                 </div>
-                                                <div className="flex flex-wrap gap-2 text-sm">
+                                                <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
                                                     <span className="bg-red-100 text-red-700 px-2 py-1 rounded">
                                                         {pasto.macro.calorie} kcal
                                                     </span>
