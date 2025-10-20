@@ -228,14 +228,27 @@
                     return;
                 }
 
-                const json = JSON.stringify({
-                    nome: nuovaRicetta.nome || 'Ricetta senza nome',
-                    ingredienti: ingredientiValidi,
-                    istruzioni: nuovaRicetta.istruzioni
-                }, null, 2);
+                const richiesta = {
+                    richiesta: "Calcola le calorie totali e i macronutrienti (proteine, carboidrati, grassi in grammi) per questa ricetta. Restituisci il risultato compilando il campo 'outputJson' qui sotto.",
+                    ricetta: {
+                        nome: nuovaRicetta.nome || 'Ricetta senza nome',
+                        ingredienti: ingredientiValidi,
+                        istruzioni: nuovaRicetta.istruzioni || ''
+                    },
+                    outputJson: {
+                        macro: {
+                            calorie: 0,
+                            proteine: 0,
+                            carboidrati: 0,
+                            grassi: 0
+                        }
+                    }
+                };
+
+                const json = JSON.stringify(richiesta, null, 2);
 
                 navigator.clipboard.writeText(json).then(() => {
-                    alert('✅ JSON copiato! Incollalo nella chat con Claude e chiedi di calcolare i macro.');
+                    alert('✅ JSON copiato! Incollalo nella chat con Claude.\n\nClaude calcolerà i macro e restituirà il JSON già pronto da incollare nell\'app.');
                 }).catch(() => {
                     alert('❌ Errore nella copia. Prova manualmente:\n\n' + json);
                 });
