@@ -723,50 +723,93 @@
                     versione: '2.0',
                     dataEsportazione: new Date().toISOString()
                 };
-                const blob = new Blob([JSON.stringify(dati, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `cucina-backup-${new Date().toISOString().split('T')[0]}.json`;
-                a.click();
+                const jsonString = JSON.stringify(dati, null, 2);
+
+                // SEMPRE copia negli appunti (per WebStorm e altri browser embedded)
+                navigator.clipboard.writeText(jsonString).catch(() => {
+                    // Ignora errori clipboard silenziosamente
+                });
+
+                // Tenta anche il download standard
+                try {
+                    const blob = new Blob([jsonString], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `cucina-backup-${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } catch (error) {
+                    // Ignora errori download silenziosamente
+                    // I dati sono comunque negli appunti
+                }
             };
 
-            const importaDati = (e) => {
+            const processaImport = (jsonString, fonte) => {
+                try {
+                    const dati = JSON.parse(jsonString);
+
+                    // Importa tutti i dati disponibili
+                    if (dati.ricette) setRicette(dati.ricette);
+                    if (dati.ingredientiDB) setIngredientiDB(dati.ingredientiDB);
+                    if (dati.inventario) setInventario(dati.inventario);
+                    if (dati.listaSpesa) setListaSpesa(dati.listaSpesa);
+                    if (dati.pasti) setPasti(dati.pasti);
+
+                    // Messaggio di successo con info sulla versione
+                    let messaggio = `Dati importati con successo da ${fonte}! ✅\n\n`;
+                    messaggio += `📖 ${dati.ricette?.length || 0} ricette\n`;
+                    messaggio += `🥕 ${dati.ingredientiDB?.length || 0} ingredienti DB\n`;
+                    messaggio += `📦 ${dati.inventario?.length || 0} item inventario\n`;
+                    messaggio += `🛒 ${dati.listaSpesa?.length || 0} item spesa\n`;
+                    messaggio += `📊 ${dati.pasti?.length || 0} pasti tracciati`;
+
+                    if (dati.versione) {
+                        messaggio += `\n\nVersione backup: ${dati.versione}`;
+                    }
+                    if (dati.dataEsportazione) {
+                        const data = new Date(dati.dataEsportazione);
+                        messaggio += `\nData esportazione: ${data.toLocaleDateString('it-IT')} ${data.toLocaleTimeString('it-IT')}`;
+                    }
+
+                    alert(messaggio);
+                    return true;
+                } catch (error) {
+                    return false;
+                }
+            };
+
+            const importaDati = async (e) => {
+                // Prima prova a leggere dagli appunti
+                try {
+                    const clipboardText = await navigator.clipboard.readText();
+                    if (clipboardText && clipboardText.trim().startsWith('{')) {
+                        // Sembra un JSON, prova a importare
+                        const successo = processaImport(clipboardText, 'appunti');
+                        if (successo) {
+                            // Reset del file input per permettere import successivi
+                            e.target.value = '';
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    // Clipboard non disponibile o errore, continua con il file
+                }
+
+                // Se appunti non ha dati validi, usa il file
                 const file = e.target.files[0];
                 if (!file) return;
 
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    try {
-                        const dati = JSON.parse(event.target.result);
-
-                        // Importa tutti i dati disponibili
-                        if (dati.ricette) setRicette(dati.ricette);
-                        if (dati.ingredientiDB) setIngredientiDB(dati.ingredientiDB);
-                        if (dati.inventario) setInventario(dati.inventario);
-                        if (dati.listaSpesa) setListaSpesa(dati.listaSpesa);
-                        if (dati.pasti) setPasti(dati.pasti);
-
-                        // Messaggio di successo con info sulla versione
-                        let messaggio = 'Dati importati con successo! ✅\n\n';
-                        messaggio += `📖 ${dati.ricette?.length || 0} ricette\n`;
-                        messaggio += `🥕 ${dati.ingredientiDB?.length || 0} ingredienti DB\n`;
-                        messaggio += `📦 ${dati.inventario?.length || 0} item inventario\n`;
-                        messaggio += `🛒 ${dati.listaSpesa?.length || 0} item spesa\n`;
-                        messaggio += `📊 ${dati.pasti?.length || 0} pasti tracciati`;
-
-                        if (dati.versione) {
-                            messaggio += `\n\nVersione backup: ${dati.versione}`;
-                        }
-                        if (dati.dataEsportazione) {
-                            const data = new Date(dati.dataEsportazione);
-                            messaggio += `\nData esportazione: ${data.toLocaleDateString('it-IT')} ${data.toLocaleTimeString('it-IT')}`;
-                        }
-
-                        alert(messaggio);
-                    } catch (error) {
+                    const successo = processaImport(event.target.result, 'file');
+                    if (!successo) {
                         alert('❌ Errore nell\'importazione del file.\n\nAssicurati che sia un file JSON valido esportato dall\'app.');
                     }
+                    // Reset del file input
+                    e.target.value = '';
                 };
                 reader.readAsText(file);
             };
