@@ -38,6 +38,20 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+
+        /* Dark mode input styles */
+        .dark-input {
+            background-color: rgb(55, 65, 81);
+            border-color: rgb(75, 85, 99);
+            color: rgb(243, 244, 246);
+        }
+        .dark-input::placeholder {
+            color: rgb(156, 163, 175);
+        }
+        .dark-input:focus {
+            outline: none;
+            border-color: rgb(249, 115, 22);
+        }
     </style>
 </head>
 <body>
@@ -127,6 +141,26 @@
             </svg>
         );
 
+        const Sun = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+        );
+
+        const Moon = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        );
+
         function CucinaApp() {
             const [activeTab, setActiveTab] = useState('ricette');
             const [ricette, setRicette] = useState([]);
@@ -136,6 +170,27 @@
             const [pasti, setPasti] = useState([]);
             const [editingId, setEditingId] = useState(null);
             const [editingRecipeId, setEditingRecipeId] = useState(null);
+            const [darkMode, setDarkMode] = useState(false);
+
+            // Helper per classi dark mode
+            const inputClass = (base = '') => `${base} ${darkMode ? 'dark-input' : 'bg-white border-gray-300'}`;
+            const textClass = darkMode ? 'text-gray-100' : 'text-gray-800';
+            const textSecondary = darkMode ? 'text-gray-300' : 'text-gray-600';
+            const cardClass = darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200';
+            const bgAccent = darkMode ? 'bg-gray-600' : 'bg-gray-50';
+
+            // Carica tema da localStorage all'avvio
+            useEffect(() => {
+                const savedTheme = localStorage.getItem('cucinaAppTheme');
+                if (savedTheme === 'dark') {
+                    setDarkMode(true);
+                }
+            }, []);
+
+            // Salva tema in localStorage quando cambia
+            useEffect(() => {
+                localStorage.setItem('cucinaAppTheme', darkMode ? 'dark' : 'light');
+            }, [darkMode]);
 
             // Carica dati da localStorage all'avvio
             useEffect(() => {
@@ -547,7 +602,15 @@
             };
 
             const esportaDati = () => {
-                const dati = { ricette, inventario, listaSpesa, pasti };
+                const dati = {
+                    ricette,
+                    ingredientiDB,
+                    inventario,
+                    listaSpesa,
+                    pasti,
+                    versione: '2.0',
+                    dataEsportazione: new Date().toISOString()
+                };
                 const blob = new Blob([JSON.stringify(dati, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -564,24 +627,65 @@
                 reader.onload = (event) => {
                     try {
                         const dati = JSON.parse(event.target.result);
+
+                        // Importa tutti i dati disponibili
                         if (dati.ricette) setRicette(dati.ricette);
+                        if (dati.ingredientiDB) setIngredientiDB(dati.ingredientiDB);
                         if (dati.inventario) setInventario(dati.inventario);
                         if (dati.listaSpesa) setListaSpesa(dati.listaSpesa);
                         if (dati.pasti) setPasti(dati.pasti);
-                        alert('Dati importati con successo! ✅');
+
+                        // Messaggio di successo con info sulla versione
+                        let messaggio = 'Dati importati con successo! ✅\n\n';
+                        messaggio += `📖 ${dati.ricette?.length || 0} ricette\n`;
+                        messaggio += `🥕 ${dati.ingredientiDB?.length || 0} ingredienti DB\n`;
+                        messaggio += `📦 ${dati.inventario?.length || 0} item inventario\n`;
+                        messaggio += `🛒 ${dati.listaSpesa?.length || 0} item spesa\n`;
+                        messaggio += `📊 ${dati.pasti?.length || 0} pasti tracciati`;
+
+                        if (dati.versione) {
+                            messaggio += `\n\nVersione backup: ${dati.versione}`;
+                        }
+                        if (dati.dataEsportazione) {
+                            const data = new Date(dati.dataEsportazione);
+                            messaggio += `\nData esportazione: ${data.toLocaleDateString('it-IT')} ${data.toLocaleTimeString('it-IT')}`;
+                        }
+
+                        alert(messaggio);
                     } catch (error) {
-                        alert('Errore nell\'importazione del file');
+                        alert('❌ Errore nell\'importazione del file.\n\nAssicurati che sia un file JSON valido esportato dall\'app.');
                     }
                 };
                 reader.readAsText(file);
             };
 
             return (
-                <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-2 sm:p-4">
+                <div className={`min-h-screen transition-colors duration-300 p-2 sm:p-4 ${
+                    darkMode
+                        ? 'bg-gradient-to-br from-gray-900 to-gray-800'
+                        : 'bg-gradient-to-br from-orange-50 to-red-50'
+                }`}>
                     <div className="max-w-6xl mx-auto">
-                        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6 mb-4 sm:mb-6">
+                        <div className={`rounded-lg shadow-lg p-3 sm:p-6 mb-4 sm:mb-6 transition-colors duration-300 ${
+                            darkMode ? 'bg-gray-800' : 'bg-white'
+                        }`}>
                             <div className="flex flex-col gap-3">
-                                <h1 className="text-2xl sm:text-3xl font-bold text-orange-600 text-center sm:text-left">🍳 Gestionale Cucina</h1>
+                                <div className="flex justify-between items-center">
+                                    <h1 className={`text-2xl sm:text-3xl font-bold text-center sm:text-left transition-colors ${
+                                        darkMode ? 'text-orange-400' : 'text-orange-600'
+                                    }`}>🍳 Gestionale Cucina</h1>
+                                    <button
+                                        onClick={() => setDarkMode(!darkMode)}
+                                        className={`p-3 rounded-lg transition-all min-w-[44px] min-h-[44px] ${
+                                            darkMode
+                                                ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                        title={darkMode ? 'Tema chiaro' : 'Tema scuro'}
+                                    >
+                                        {darkMode ? <Sun /> : <Moon />}
+                                    </button>
+                                </div>
                                 <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                                     <button
                                         onClick={ricettaRandom}
@@ -606,8 +710,12 @@
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-lg shadow-lg mb-4 sm:mb-6 overflow-hidden">
-                            <div className="flex overflow-x-auto tab-container border-b snap-x snap-mandatory">
+                        <div className={`rounded-lg shadow-lg mb-4 sm:mb-6 overflow-hidden transition-colors duration-300 ${
+                            darkMode ? 'bg-gray-800' : 'bg-white'
+                        }`}>
+                            <div className={`flex overflow-x-auto tab-container border-b snap-x snap-mandatory ${
+                                darkMode ? 'border-gray-700' : 'border-gray-200'
+                            }`}>
                                 {[
                                     { key: 'ricette', label: 'Ricette', icon: '📖' },
                                     { key: 'ingredienti', label: 'Ingredienti', icon: '🥕' },
@@ -620,8 +728,12 @@
                                         onClick={() => setActiveTab(tab.key)}
                                         className={`px-3 sm:px-6 py-3 font-semibold whitespace-nowrap flex-shrink-0 min-h-[44px] transition-all snap-center flex flex-col sm:flex-row items-center gap-1 sm:gap-2 ${
                                             activeTab === tab.key
-                                                ? 'border-b-3 border-orange-500 text-orange-600 bg-orange-50'
-                                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                                                ? darkMode
+                                                    ? 'border-b-3 border-orange-400 text-orange-400 bg-gray-700'
+                                                    : 'border-b-3 border-orange-500 text-orange-600 bg-orange-50'
+                                                : darkMode
+                                                    ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
+                                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                                         }`}
                                     >
                                         <span className="text-lg sm:text-base">{tab.icon}</span>
@@ -631,14 +743,20 @@
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+                        <div className={`rounded-lg shadow-lg p-3 sm:p-6 transition-colors duration-300 ${
+                            darkMode ? 'bg-gray-800' : 'bg-white'
+                        }`}>
                             {activeTab === 'ricette' && (
                                 <div>
-                                    <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-gray-800">Le Mie Ricette</h2>
+                                    <h2 className={`text-xl sm:text-2xl font-bold mb-3 sm:mb-4 transition-colors ${
+                                        darkMode ? 'text-gray-100' : 'text-gray-800'
+                                    }`}>Le Mie Ricette</h2>
 
-                                    <div className="bg-orange-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
+                                    <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 transition-colors ${
+                                        darkMode ? 'bg-gray-700' : 'bg-orange-50'
+                                    }`}>
                                         <div className="flex justify-between items-center mb-3">
-                                            <h3 className="font-semibold text-sm sm:text-base">
+                                            <h3 className={`font-semibold text-sm sm:text-base ${textClass}`}>
                                                 {editingRecipeId ? 'Modifica Ricetta' : 'Aggiungi Ricetta'}
                                             </h3>
                                             {editingRecipeId && (
@@ -655,13 +773,13 @@
                                             placeholder="Nome ricetta"
                                             value={nuovaRicetta.nome}
                                             onChange={(e) => setNuovaRicetta({ ...nuovaRicetta, nome: e.target.value })}
-                                            className="w-full p-3 border rounded mb-3 text-base"
+                                            className={inputClass('w-full p-3 border rounded mb-3 text-base')}
                                         />
-                                        
+
                                         <div className="mb-3">
-                                            <label className="font-semibold block mb-2 text-sm sm:text-base">Ingredienti:</label>
+                                            <label className={`font-semibold block mb-2 text-sm sm:text-base ${textClass}`}>Ingredienti:</label>
                                             {nuovaRicetta.ingredienti.map((ing, idx) => (
-                                                <div key={idx} className="flex flex-col gap-2 mb-3 p-2 bg-gray-50 rounded">
+                                                <div key={idx} className={`flex flex-col gap-2 mb-3 p-2 rounded ${bgAccent}`}>
                                                     <select
                                                         value=""
                                                         onChange={(e) => {
@@ -678,7 +796,7 @@
                                                                 }
                                                             }
                                                         }}
-                                                        className="w-full p-2 border rounded text-sm bg-white"
+                                                        className={inputClass('w-full p-2 border rounded text-sm')}
                                                     >
                                                         <option value="">🔍 Cerca nel database o inserisci manualmente sotto</option>
                                                         {ingredientiDB.map(ingDB => (
@@ -695,7 +813,7 @@
                                                                 nuoviIng[idx].nome = e.target.value;
                                                                 setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
                                                             }}
-                                                            className="flex-1 p-3 border rounded text-base"
+                                                            className={inputClass('flex-1 p-3 border rounded text-base')}
                                                         />
                                                         <div className="flex gap-2">
                                                         <input
@@ -707,7 +825,7 @@
                                                                 nuoviIng[idx].quantita = e.target.value;
                                                                 setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
                                                             }}
-                                                            className="w-24 p-3 border rounded text-base"
+                                                            className={inputClass('w-24 p-3 border rounded text-base')}
                                                         />
                                                         <select
                                                             value={ing.unita}
@@ -716,7 +834,7 @@
                                                                 nuoviIng[idx].unita = e.target.value;
                                                                 setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
                                                             }}
-                                                            className="flex-1 sm:w-32 p-3 border rounded text-base"
+                                                            className={inputClass('flex-1 sm:w-32 p-3 border rounded text-base')}
                                                         >
                                                             {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
                                                         </select>
@@ -755,28 +873,28 @@
                                             placeholder="Istruzioni di preparazione..."
                                             value={nuovaRicetta.istruzioni}
                                             onChange={(e) => setNuovaRicetta({ ...nuovaRicetta, istruzioni: e.target.value })}
-                                            className="w-full p-3 border rounded mb-3 h-24 text-base"
+                                            className={inputClass('w-full p-3 border rounded mb-3 h-24 text-base')}
                                         />
 
                                         <div className="grid grid-cols-2 gap-2 mb-3">
                                             <div>
-                                                <label className="text-xs text-gray-600 block mb-1">Grammi totali piatto finito</label>
+                                                <label className={`text-xs block mb-1 ${textSecondary}`}>Grammi totali piatto finito</label>
                                                 <input
                                                     type="number"
                                                     placeholder="es. 400"
                                                     value={nuovaRicetta.grammiTotali}
                                                     onChange={(e) => setNuovaRicetta({ ...nuovaRicetta, grammiTotali: e.target.value })}
-                                                    className="w-full p-3 border rounded text-base"
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-xs text-gray-600 block mb-1">Grammi per 1 porzione</label>
+                                                <label className={`text-xs block mb-1 ${textSecondary}`}>Grammi per 1 porzione</label>
                                                 <input
                                                     type="number"
                                                     placeholder="es. 200"
                                                     value={nuovaRicetta.grammiPorzione}
                                                     onChange={(e) => setNuovaRicetta({ ...nuovaRicetta, grammiPorzione: e.target.value })}
-                                                    className="w-full p-3 border rounded text-base"
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
                                                 />
                                             </div>
                                         </div>
@@ -794,7 +912,7 @@
                                                     ...nuovaRicetta,
                                                     macro: { ...nuovaRicetta.macro, calorie: e.target.value }
                                                 })}
-                                                className="p-3 border rounded text-base"
+                                                className={inputClass('p-3 border rounded text-base')}
                                             />
                                             <input
                                                 type="number"
@@ -804,7 +922,7 @@
                                                     ...nuovaRicetta,
                                                     macro: { ...nuovaRicetta.macro, proteine: e.target.value }
                                                 })}
-                                                className="p-3 border rounded text-base"
+                                                className={inputClass('p-3 border rounded text-base')}
                                             />
                                             <input
                                                 type="number"
@@ -814,7 +932,7 @@
                                                     ...nuovaRicetta,
                                                     macro: { ...nuovaRicetta.macro, carboidrati: e.target.value }
                                                 })}
-                                                className="p-3 border rounded text-base"
+                                                className={inputClass('p-3 border rounded text-base')}
                                             />
                                             <input
                                                 type="number"
@@ -824,7 +942,7 @@
                                                     ...nuovaRicetta,
                                                     macro: { ...nuovaRicetta.macro, grassi: e.target.value }
                                                 })}
-                                                className="p-3 border rounded text-base"
+                                                className={inputClass('p-3 border rounded text-base')}
                                             />
                                         </div>
 
@@ -849,9 +967,9 @@
 
                                     <div className="space-y-3 sm:space-y-4">
                                         {ricette.map(ricetta => (
-                                            <div key={ricetta.id} className="border rounded-lg p-3 sm:p-4 hover:shadow-md transition">
+                                            <div key={ricetta.id} className={`border rounded-lg p-3 sm:p-4 hover:shadow-md transition ${cardClass}`}>
                                                 <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2 mb-2">
-                                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-800">{ricetta.nome}</h3>
+                                                    <h3 className={`text-lg sm:text-xl font-semibold ${textClass}`}>{ricetta.nome}</h3>
                                                     <div className="flex gap-2 flex-shrink-0">
                                                         <button
                                                             onClick={() => modificaRicetta(ricetta)}
@@ -882,10 +1000,10 @@
                                                         </button>
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div className="mb-2">
-                                                    <p className="font-semibold text-sm text-gray-600">Ingredienti:</p>
-                                                    <ul className="text-sm text-gray-700">
+                                                    <p className={`font-semibold text-sm ${textSecondary}`}>Ingredienti:</p>
+                                                    <ul className={`text-sm ${textSecondary}`}>
                                                         {ricetta.ingredienti.map((ing, idx) => (
                                                             <li key={idx}>• {ing.nome}: {ing.quantita} {ing.unita}</li>
                                                         ))}
@@ -893,7 +1011,7 @@
                                                 </div>
 
                                                 {ricetta.istruzioni && (
-                                                    <p className="text-sm text-gray-600 mb-2">{ricetta.istruzioni}</p>
+                                                    <p className={`text-sm mb-2 ${textSecondary}`}>{ricetta.istruzioni}</p>
                                                 )}
 
                                                 <div className="mb-2">
@@ -948,23 +1066,23 @@
 
                             {activeTab === 'ingredienti' && (
                                 <div>
-                                    <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-gray-800">🥕 Database Ingredienti</h2>
+                                    <h2 className={`text-xl sm:text-2xl font-bold mb-3 sm:mb-4 ${textClass}`}>🥕 Database Ingredienti</h2>
 
-                                    <div className="bg-teal-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
-                                        <h3 className="font-semibold mb-3 text-sm sm:text-base">Aggiungi Ingrediente</h3>
+                                    <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 ${bgAccent}`}>
+                                        <h3 className={`font-semibold mb-3 text-sm sm:text-base ${textClass}`}>Aggiungi Ingrediente</h3>
                                         <div className="mb-3">
                                             <input
                                                 type="text"
                                                 placeholder="Nome ingrediente (es. Pollo)"
                                                 value={nuovoIngredienteDB.nome}
                                                 onChange={(e) => setNuovoIngredienteDB({ ...nuovoIngredienteDB, nome: e.target.value })}
-                                                className="w-full p-3 border rounded text-base mb-3"
+                                                className={inputClass('w-full p-3 border rounded text-base mb-3')}
                                             />
-                                            <label className="text-xs text-gray-600 block mb-1">Unità di misura predefinita</label>
+                                            <label className={`text-xs block mb-1 ${textSecondary}`}>Unità di misura predefinita</label>
                                             <select
                                                 value={nuovoIngredienteDB.unitaDefault}
                                                 onChange={(e) => setNuovoIngredienteDB({ ...nuovoIngredienteDB, unitaDefault: e.target.value })}
-                                                className="w-full p-3 border rounded text-base mb-3"
+                                                className={inputClass('w-full p-3 border rounded text-base mb-3')}
                                             >
                                                 {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
                                             </select>
@@ -983,7 +1101,7 @@
                                                     ...nuovoIngredienteDB,
                                                     macro: { ...nuovoIngredienteDB.macro, calorie: e.target.value }
                                                 })}
-                                                className="p-3 border rounded text-base"
+                                                className={inputClass('p-3 border rounded text-base')}
                                             />
                                             <input
                                                 type="number"
@@ -993,7 +1111,7 @@
                                                     ...nuovoIngredienteDB,
                                                     macro: { ...nuovoIngredienteDB.macro, proteine: e.target.value }
                                                 })}
-                                                className="p-3 border rounded text-base"
+                                                className={inputClass('p-3 border rounded text-base')}
                                             />
                                             <input
                                                 type="number"
@@ -1003,7 +1121,7 @@
                                                     ...nuovoIngredienteDB,
                                                     macro: { ...nuovoIngredienteDB.macro, carboidrati: e.target.value }
                                                 })}
-                                                className="p-3 border rounded text-base"
+                                                className={inputClass('p-3 border rounded text-base')}
                                             />
                                             <input
                                                 type="number"
@@ -1013,7 +1131,7 @@
                                                     ...nuovoIngredienteDB,
                                                     macro: { ...nuovoIngredienteDB.macro, grassi: e.target.value }
                                                 })}
-                                                className="p-3 border rounded text-base"
+                                                className={inputClass('p-3 border rounded text-base')}
                                             />
                                         </div>
 
@@ -1027,11 +1145,11 @@
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                         {ingredientiDB.map(ing => (
-                                            <div key={ing.id} className="border-2 border-teal-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition bg-teal-50">
+                                            <div key={ing.id} className={`border-2 border-teal-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition ${bgAccent}`}>
                                                 <div className="flex justify-between items-start mb-2">
                                                     <div className="flex-1">
-                                                        <h3 className="font-bold text-gray-800 text-base">{ing.nome}</h3>
-                                                        <p className="text-xs text-gray-500">Unità: {ing.unitaDefault}</p>
+                                                        <h3 className={`font-bold text-base ${textClass}`}>{ing.nome}</h3>
+                                                        <p className={`text-xs ${textSecondary}`}>Unità: {ing.unitaDefault}</p>
                                                     </div>
                                                     <button
                                                         onClick={() => eliminaIngredienteDB(ing.id)}
@@ -1062,9 +1180,9 @@
 
                             {activeTab === 'inventario' && (
                                 <div>
-                                    <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-gray-800">Inventario Ingredienti</h2>
+                                    <h2 className={`text-xl sm:text-2xl font-bold mb-3 sm:mb-4 ${textClass}`}>Inventario Ingredienti</h2>
 
-                                    <div className="bg-blue-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 flex flex-col gap-2">
+                                    <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 flex flex-col gap-2 ${bgAccent}`}>
                                         <select
                                             value=""
                                             onChange={(e) => {
@@ -1079,7 +1197,7 @@
                                                     }
                                                 }
                                             }}
-                                            className="w-full p-3 border rounded text-base bg-white"
+                                            className={inputClass('w-full p-3 border rounded text-base')}
                                         >
                                             <option value="">🔍 Cerca nel database o inserisci sotto</option>
                                             {ingredientiDB.map(ingDB => (
@@ -1091,7 +1209,7 @@
                                             placeholder="Nome ingrediente"
                                             value={nuovoItem.nome}
                                             onChange={(e) => setNuovoItem({ ...nuovoItem, nome: e.target.value })}
-                                            className="w-full p-3 border rounded text-base"
+                                            className={inputClass('w-full p-3 border rounded text-base')}
                                         />
                                         <div className="flex gap-2">
                                             <input
@@ -1099,12 +1217,12 @@
                                                 placeholder="Quantità"
                                                 value={nuovoItem.quantita}
                                                 onChange={(e) => setNuovoItem({ ...nuovoItem, quantita: e.target.value })}
-                                                className="flex-1 p-3 border rounded text-base"
+                                                className={inputClass('flex-1 p-3 border rounded text-base')}
                                             />
                                             <select
                                                 value={nuovoItem.unita}
                                                 onChange={(e) => setNuovoItem({ ...nuovoItem, unita: e.target.value })}
-                                                className="flex-1 p-3 border rounded text-base"
+                                                className={inputClass('flex-1 p-3 border rounded text-base')}
                                             >
                                                 {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
                                             </select>
@@ -1119,26 +1237,26 @@
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                         {inventario.map(item => (
-                                            <div key={item.id} className="border rounded-lg p-3 sm:p-4 hover:shadow-md transition">
+                                            <div key={item.id} className={`border rounded-lg p-3 sm:p-4 hover:shadow-md transition ${cardClass}`}>
                                                 {editingId === item.id ? (
                                                     <div className="space-y-2">
                                                         <input
                                                             type="text"
                                                             value={item.nome}
                                                             onChange={(e) => modificaInventario(item.id, 'nome', e.target.value)}
-                                                            className="w-full p-3 border rounded text-base"
+                                                            className={inputClass('w-full p-3 border rounded text-base')}
                                                         />
                                                         <div className="flex gap-2">
                                                             <input
                                                                 type="number"
                                                                 value={item.quantita}
                                                                 onChange={(e) => modificaInventario(item.id, 'quantita', e.target.value)}
-                                                                className="flex-1 p-3 border rounded text-base"
+                                                                className={inputClass('flex-1 p-3 border rounded text-base')}
                                                             />
                                                             <select
                                                                 value={item.unita}
                                                                 onChange={(e) => modificaInventario(item.id, 'unita', e.target.value)}
-                                                                className="flex-1 p-3 border rounded text-base"
+                                                                className={inputClass('flex-1 p-3 border rounded text-base')}
                                                             >
                                                                 {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
                                                             </select>
@@ -1153,8 +1271,8 @@
                                                 ) : (
                                                     <div className="flex justify-between items-center">
                                                         <div>
-                                                            <h3 className="font-semibold text-gray-800">{item.nome}</h3>
-                                                            <p className="text-sm text-gray-600">{item.quantita} {item.unita}</p>
+                                                            <h3 className={`font-semibold ${textClass}`}>{item.nome}</h3>
+                                                            <p className={`text-sm ${textSecondary}`}>{item.quantita} {item.unita}</p>
                                                         </div>
                                                         <div className="flex gap-2">
                                                             <button
@@ -1180,9 +1298,9 @@
 
                             {activeTab === 'spesa' && (
                                 <div>
-                                    <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-gray-800">Lista della Spesa</h2>
+                                    <h2 className={`text-xl sm:text-2xl font-bold mb-3 sm:mb-4 ${textClass}`}>Lista della Spesa</h2>
 
-                                    <div className="bg-green-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 flex flex-col gap-2">
+                                    <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 flex flex-col gap-2 ${bgAccent}`}>
                                         <select
                                             value=""
                                             onChange={(e) => {
@@ -1198,7 +1316,7 @@
                                                     }
                                                 }
                                             }}
-                                            className="w-full p-3 border rounded text-base bg-white"
+                                            className={inputClass('w-full p-3 border rounded text-base')}
                                         >
                                             <option value="">🔍 Cerca nel database o inserisci sotto</option>
                                             {ingredientiDB.map(ingDB => (
@@ -1210,7 +1328,7 @@
                                             placeholder="Cosa comprare"
                                             value={nuovoSpesa.nome}
                                             onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, nome: e.target.value })}
-                                            className="w-full p-3 border rounded text-base"
+                                            className={inputClass('w-full p-3 border rounded text-base')}
                                         />
                                         <div className="flex gap-2">
                                             <input
@@ -1218,12 +1336,12 @@
                                                 placeholder="Quantità"
                                                 value={nuovoSpesa.quantita}
                                                 onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, quantita: e.target.value })}
-                                                className="flex-1 p-3 border rounded text-base"
+                                                className={inputClass('flex-1 p-3 border rounded text-base')}
                                             />
                                             <select
                                                 value={nuovoSpesa.unita}
                                                 onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, unita: e.target.value })}
-                                                className="flex-1 p-3 border rounded text-base"
+                                                className={inputClass('flex-1 p-3 border rounded text-base')}
                                             >
                                                 {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
                                             </select>
@@ -1241,7 +1359,7 @@
                                             <div
                                                 key={item.id}
                                                 className={`flex items-center justify-between p-3 sm:p-4 border rounded-lg hover:shadow-md transition ${
-                                                    item.comprato ? 'bg-gray-50 opacity-60' : 'bg-white'
+                                                    item.comprato ? `${bgAccent} opacity-60` : cardClass
                                                 }`}
                                             >
                                                 <div className="flex items-center gap-3 flex-1 min-h-[44px]">
@@ -1251,10 +1369,10 @@
                                                         onChange={() => toggleComprato(item.id)}
                                                         className="w-6 h-6 cursor-pointer flex-shrink-0"
                                                     />
-                                                    <div className={item.comprato ? 'line-through text-gray-500' : ''}>
-                                                        <span className="font-semibold text-sm sm:text-base">{item.nome}</span>
+                                                    <div className={item.comprato ? `line-through ${textSecondary}` : ''}>
+                                                        <span className={`font-semibold text-sm sm:text-base ${textClass}`}>{item.nome}</span>
                                                         {item.quantita && (
-                                                            <span className="text-xs sm:text-sm text-gray-600 ml-2">
+                                                            <span className={`text-xs sm:text-sm ml-2 ${textSecondary}`}>
                                                                 ({item.quantita} {item.unita})
                                                             </span>
                                                         )}
@@ -1274,22 +1392,22 @@
 
                             {activeTab === 'tracking' && (
                                 <div>
-                                    <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-gray-800">Tracking Pasti</h2>
+                                    <h2 className={`text-xl sm:text-2xl font-bold mb-3 sm:mb-4 ${textClass}`}>Tracking Pasti</h2>
 
-                                    <div className="bg-purple-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
-                                        <h3 className="font-semibold mb-3 text-sm sm:text-base">Registra Pasto</h3>
+                                    <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 ${bgAccent}`}>
+                                        <h3 className={`font-semibold mb-3 text-sm sm:text-base ${textClass}`}>Registra Pasto</h3>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
                                             <input
                                                 type="date"
                                                 value={nuovoPasto.data}
                                                 onChange={(e) => setNuovoPasto({ ...nuovoPasto, data: e.target.value })}
-                                                className="p-3 border rounded text-base"
+                                                className={inputClass('p-3 border rounded text-base')}
                                             />
                                             <select
                                                 value={nuovoPasto.tipoPasto}
                                                 onChange={(e) => setNuovoPasto({ ...nuovoPasto, tipoPasto: e.target.value })}
-                                                className="p-3 border rounded text-base font-semibold"
+                                                className={inputClass('p-3 border rounded text-base font-semibold')}
                                             >
                                                 {tipiPasto.map(tipo => (
                                                     <option key={tipo} value={tipo}>{tipo}</option>
@@ -1298,11 +1416,11 @@
                                         </div>
 
                                         <div className="mb-3">
-                                            <label className="text-xs text-gray-600 block mb-1">🔍 Cerca ricetta o ingrediente dal database</label>
+                                            <label className={`text-xs block mb-1 ${textSecondary}`}>🔍 Cerca ricetta o ingrediente dal database</label>
                                             <select
                                                 value={nuovoPasto.ricettaId || ''}
                                                 onChange={(e) => selezionaRicettaTracking(e.target.value)}
-                                                className="w-full p-3 border rounded text-base bg-white mb-2"
+                                                className={inputClass('w-full p-3 border rounded text-base mb-2')}
                                             >
                                                 <option value="">-- Scegli ricetta completa --</option>
                                                 {ricette.map(ricetta => (
@@ -1330,7 +1448,7 @@
                                                         }
                                                     }
                                                 }}
-                                                className="w-full p-3 border rounded text-base bg-white"
+                                                className={inputClass('w-full p-3 border rounded text-base')}
                                             >
                                                 <option value="">-- Scegli ingrediente singolo --</option>
                                                 {ingredientiDB.map(ingDB => (
@@ -1339,7 +1457,7 @@
                                                     </option>
                                                 ))}
                                             </select>
-                                            <p className="text-xs text-gray-500 mt-1">Oppure inserisci manualmente qui sotto ↓</p>
+                                            <p className={`text-xs mt-1 ${textSecondary}`}>Oppure inserisci manualmente qui sotto ↓</p>
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
@@ -1348,7 +1466,7 @@
                                                 placeholder="Nome alimento"
                                                 value={nuovoPasto.nome}
                                                 onChange={(e) => setNuovoPasto({ ...nuovoPasto, nome: e.target.value })}
-                                                className="p-3 border rounded text-base"
+                                                className={inputClass('p-3 border rounded text-base')}
                                                 disabled={nuovoPasto.isRicetta}
                                             />
                                             <div className="flex gap-2">
@@ -1357,12 +1475,12 @@
                                                     placeholder="Quantità"
                                                     value={nuovoPasto.quantita}
                                                     onChange={(e) => aggiornaQuantitaRicetta(e.target.value)}
-                                                    className="flex-1 p-3 border rounded text-base"
+                                                    className={inputClass('flex-1 p-3 border rounded text-base')}
                                                 />
                                                 <select
                                                     value={nuovoPasto.unita}
                                                     onChange={(e) => setNuovoPasto({ ...nuovoPasto, unita: e.target.value })}
-                                                    className="p-3 border rounded text-base"
+                                                    className={inputClass('p-3 border rounded text-base')}
                                                     disabled={nuovoPasto.isRicetta}
                                                 >
                                                     <option value="g">g</option>
@@ -1382,7 +1500,7 @@
                                                     ...nuovoPasto,
                                                     macro: { ...nuovoPasto.macro, calorie: e.target.value }
                                                 })}
-                                                className="p-3 border rounded text-base"
+                                                className={inputClass('p-3 border rounded text-base')}
                                             />
                                             <input
                                                 type="number"
@@ -1392,7 +1510,7 @@
                                                     ...nuovoPasto,
                                                     macro: { ...nuovoPasto.macro, proteine: e.target.value }
                                                 })}
-                                                className="p-3 border rounded text-base"
+                                                className={inputClass('p-3 border rounded text-base')}
                                             />
                                             <input
                                                 type="number"
@@ -1402,7 +1520,7 @@
                                                     ...nuovoPasto,
                                                     macro: { ...nuovoPasto.macro, carboidrati: e.target.value }
                                                 })}
-                                                className="p-3 border rounded text-base"
+                                                className={inputClass('p-3 border rounded text-base')}
                                             />
                                             <input
                                                 type="number"
@@ -1412,7 +1530,7 @@
                                                     ...nuovoPasto,
                                                     macro: { ...nuovoPasto.macro, grassi: e.target.value }
                                                 })}
-                                                className="p-3 border rounded text-base"
+                                                className={inputClass('p-3 border rounded text-base')}
                                             />
                                         </div>
 
@@ -1425,27 +1543,27 @@
                                     </div>
 
                                     {pasti.length > 0 && (
-                                        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg">
-                                            <h3 className="font-semibold mb-2 text-sm sm:text-base">Totale di oggi:</h3>
+                                        <div className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg ${darkMode ? 'bg-gradient-to-r from-purple-900 to-pink-900' : 'bg-gradient-to-r from-purple-100 to-pink-100'}`}>
+                                            <h3 className={`font-semibold mb-2 text-sm sm:text-base ${textClass}`}>Totale di oggi:</h3>
                                             {(() => {
                                                 const oggi = new Date().toISOString().split('T')[0];
                                                 const totali = totaliGiornalieri(oggi);
                                                 return (
                                                     <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3">
-                                                        <div className="bg-white px-3 py-2 rounded-lg shadow">
-                                                            <span className="text-xs sm:text-sm text-gray-600">Calorie</span>
+                                                        <div className={`px-3 py-2 rounded-lg shadow ${cardClass}`}>
+                                                            <span className={`text-xs sm:text-sm ${textSecondary}`}>Calorie</span>
                                                             <p className="text-lg sm:text-xl font-bold text-red-600">{totali.calorie.toFixed(0)}</p>
                                                         </div>
-                                                        <div className="bg-white px-3 py-2 rounded-lg shadow">
-                                                            <span className="text-xs sm:text-sm text-gray-600">Proteine</span>
+                                                        <div className={`px-3 py-2 rounded-lg shadow ${cardClass}`}>
+                                                            <span className={`text-xs sm:text-sm ${textSecondary}`}>Proteine</span>
                                                             <p className="text-lg sm:text-xl font-bold text-blue-600">{totali.proteine.toFixed(1)}g</p>
                                                         </div>
-                                                        <div className="bg-white px-3 py-2 rounded-lg shadow">
-                                                            <span className="text-xs sm:text-sm text-gray-600">Carboidrati</span>
+                                                        <div className={`px-3 py-2 rounded-lg shadow ${cardClass}`}>
+                                                            <span className={`text-xs sm:text-sm ${textSecondary}`}>Carboidrati</span>
                                                             <p className="text-lg sm:text-xl font-bold text-yellow-600">{totali.carboidrati.toFixed(1)}g</p>
                                                         </div>
-                                                        <div className="bg-white px-3 py-2 rounded-lg shadow">
-                                                            <span className="text-xs sm:text-sm text-gray-600">Grassi</span>
+                                                        <div className={`px-3 py-2 rounded-lg shadow ${cardClass}`}>
+                                                            <span className={`text-xs sm:text-sm ${textSecondary}`}>Grassi</span>
                                                             <p className="text-lg sm:text-xl font-bold text-green-600">{totali.grassi.toFixed(1)}g</p>
                                                         </div>
                                                     </div>
@@ -1471,7 +1589,7 @@
                                             });
 
                                             return Object.entries(pastiRaggruppati).map(([data, pastiPerTipo]) => (
-                                                <div key={data} className="border-2 border-purple-200 rounded-lg p-3 sm:p-4 bg-white">
+                                                <div key={data} className={`border-2 border-purple-200 rounded-lg p-3 sm:p-4 ${cardClass}`}>
                                                     <h3 className="font-bold text-lg text-purple-700 mb-3">
                                                         {new Date(data + 'T00:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
                                                     </h3>
@@ -1483,11 +1601,11 @@
                                                             </h4>
                                                             <div className="space-y-2 ml-0 sm:ml-4">
                                                                 {pastiDelTipo.map(pasto => (
-                                                                    <div key={pasto.id} className="border rounded-lg p-2 sm:p-3 bg-gray-50 hover:bg-gray-100 transition">
+                                                                    <div key={pasto.id} className={`border rounded-lg p-2 sm:p-3 transition ${bgAccent} hover:opacity-80`}>
                                                                         <div className="flex justify-between items-start gap-2 mb-2">
                                                                             <div className="flex-1">
-                                                                                <h5 className="font-semibold text-gray-800 text-sm">{pasto.nome}</h5>
-                                                                                <p className="text-xs text-gray-500">
+                                                                                <h5 className={`font-semibold text-sm ${textClass}`}>{pasto.nome}</h5>
+                                                                                <p className={`text-xs ${textSecondary}`}>
                                                                                     {pasto.quantita} {pasto.unita}
                                                                                 </p>
                                                                             </div>
