@@ -289,34 +289,146 @@
             // Database Ingredienti
             const [nuovoIngredienteDB, setNuovoIngredienteDB] = useState({
                 nome: '',
+                categoria: 'Altro',
+                unitaPrincipale: 'g', // g o ml
                 unitaDefault: 'g',
+                conversioniUnita: [], // [{ unita: 'pz', fattore: 9 }]
                 macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' }
             });
+            const [editingIngredienteId, setEditingIngredienteId] = useState(null);
+            const [filtroCategoria, setFiltroCategoria] = useState('Tutte');
+            const [ordinamento, setOrdinamento] = useState('nome');
+
+            const categorie = ['Carne', 'Pesce', 'Verdura', 'Frutta', 'Cereali', 'Legumi', 'Latticini', 'Uova', 'Oli e Grassi', 'Dolci', 'Bevande', 'Altro'];
 
             const aggiungiIngredienteDB = () => {
-                if (!nuovoIngredienteDB.nome) return;
+                if (!nuovoIngredienteDB.nome.trim()) {
+                    alert('❌ Inserisci il nome dell\'ingrediente!');
+                    return;
+                }
 
-                const ingrediente = {
-                    id: Date.now(),
-                    ...nuovoIngredienteDB
-                };
+                // Verifica nome univoco
+                const nomeNormalizzato = nuovoIngredienteDB.nome.trim().toLowerCase();
+                const esisteGia = ingredientiDB.some(ing =>
+                    ing.id !== editingIngredienteId &&
+                    ing.nome.toLowerCase() === nomeNormalizzato
+                );
 
-                setIngredientiDB([...ingredientiDB, ingrediente]);
+                if (esisteGia) {
+                    alert('❌ Esiste già un ingrediente con questo nome!');
+                    return;
+                }
+
+                if (editingIngredienteId) {
+                    // Modalità modifica
+                    setIngredientiDB(ingredientiDB.map(ing =>
+                        ing.id === editingIngredienteId
+                            ? { ...ing, ...nuovoIngredienteDB, nome: nuovoIngredienteDB.nome.trim() }
+                            : ing
+                    ));
+                    setEditingIngredienteId(null);
+                } else {
+                    // Modalità creazione
+                    const ingrediente = {
+                        id: Date.now(),
+                        ...nuovoIngredienteDB,
+                        nome: nuovoIngredienteDB.nome.trim()
+                    };
+                    setIngredientiDB([...ingredientiDB, ingrediente]);
+                }
+
+                // Reset form
                 setNuovoIngredienteDB({
                     nome: '',
+                    categoria: 'Altro',
+                    unitaPrincipale: 'g',
                     unitaDefault: 'g',
+                    conversioniUnita: [],
+                    macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' }
+                });
+            };
+
+            const modificaIngrediente = (ingrediente) => {
+                setNuovoIngredienteDB({
+                    nome: ingrediente.nome,
+                    categoria: ingrediente.categoria || 'Altro',
+                    unitaPrincipale: ingrediente.unitaPrincipale || 'g',
+                    unitaDefault: ingrediente.unitaDefault || 'g',
+                    conversioniUnita: ingrediente.conversioniUnita || [],
+                    macro: ingrediente.macro
+                });
+                setEditingIngredienteId(ingrediente.id);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            const annullaModificaIngrediente = () => {
+                setEditingIngredienteId(null);
+                setNuovoIngredienteDB({
+                    nome: '',
+                    categoria: 'Altro',
+                    unitaPrincipale: 'g',
+                    unitaDefault: 'g',
+                    conversioniUnita: [],
                     macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' }
                 });
             };
 
             const eliminaIngredienteDB = (id) => {
+                if (!confirm('Sei sicuro di voler eliminare questo ingrediente?')) return;
                 setIngredientiDB(ingredientiDB.filter(i => i.id !== id));
             };
 
-            const modificaIngredienteDB = (id, field, value) => {
-                setIngredientiDB(ingredientiDB.map(ing =>
-                    ing.id === id ? { ...ing, [field]: value } : ing
-                ));
+            const aggiungiConversione = () => {
+                const nuovaConversione = { unita: '', fattore: '' };
+                setNuovoIngredienteDB({
+                    ...nuovoIngredienteDB,
+                    conversioniUnita: [...nuovoIngredienteDB.conversioniUnita, nuovaConversione]
+                });
+            };
+
+            const rimuoviConversione = (index) => {
+                const nuoveConversioni = [...nuovoIngredienteDB.conversioniUnita];
+                nuoveConversioni.splice(index, 1);
+                setNuovoIngredienteDB({
+                    ...nuovoIngredienteDB,
+                    conversioniUnita: nuoveConversioni
+                });
+            };
+
+            const aggiornaConversione = (index, campo, valore) => {
+                const nuoveConversioni = [...nuovoIngredienteDB.conversioniUnita];
+                nuoveConversioni[index][campo] = valore;
+                setNuovoIngredienteDB({
+                    ...nuovoIngredienteDB,
+                    conversioniUnita: nuoveConversioni
+                });
+            };
+
+            const getIngredientiFiltrati = () => {
+                let filtrati = ingredientiDB;
+
+                // Applica filtro categoria
+                if (filtroCategoria !== 'Tutte') {
+                    filtrati = filtrati.filter(ing => ing.categoria === filtroCategoria);
+                }
+
+                // Applica ordinamento
+                switch (ordinamento) {
+                    case 'nome':
+                        filtrati = [...filtrati].sort((a, b) => a.nome.localeCompare(b.nome));
+                        break;
+                    case 'categoria':
+                        filtrati = [...filtrati].sort((a, b) => (a.categoria || 'Altro').localeCompare(b.categoria || 'Altro'));
+                        break;
+                    case 'calorie':
+                        filtrati = [...filtrati].sort((a, b) => (parseFloat(b.macro.calorie) || 0) - (parseFloat(a.macro.calorie) || 0));
+                        break;
+                    case 'proteine':
+                        filtrati = [...filtrati].sort((a, b) => (parseFloat(b.macro.proteine) || 0) - (parseFloat(a.macro.proteine) || 0));
+                        break;
+                }
+
+                return filtrati;
             };
 
             const copiaIngredientiJSON = () => {
@@ -1069,29 +1181,65 @@
                                     <h2 className={`text-xl sm:text-2xl font-bold mb-3 sm:mb-4 ${textClass}`}>🥕 Database Ingredienti</h2>
 
                                     <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 ${bgAccent}`}>
-                                        <h3 className={`font-semibold mb-3 text-sm sm:text-base ${textClass}`}>Aggiungi Ingrediente</h3>
+                                        <div className="flex justify-between items-center mb-3">
+                                            <h3 className={`font-semibold text-sm sm:text-base ${textClass}`}>
+                                                {editingIngredienteId ? 'Modifica Ingrediente' : 'Aggiungi Ingrediente'}
+                                            </h3>
+                                            {editingIngredienteId && (
+                                                <button
+                                                    onClick={annullaModificaIngrediente}
+                                                    className="text-red-600 hover:text-red-700 text-sm"
+                                                >
+                                                    Annulla
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Nome e Categoria */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                                            <div>
+                                                <label className={`text-xs block mb-1 ${textSecondary}`}>Nome ingrediente *</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="es. Gallette di Riso"
+                                                    value={nuovoIngredienteDB.nome}
+                                                    onChange={(e) => setNuovoIngredienteDB({ ...nuovoIngredienteDB, nome: e.target.value })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className={`text-xs block mb-1 ${textSecondary}`}>Categoria</label>
+                                                <select
+                                                    value={nuovoIngredienteDB.categoria}
+                                                    onChange={(e) => setNuovoIngredienteDB({ ...nuovoIngredienteDB, categoria: e.target.value })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                >
+                                                    {categorie.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        {/* Unità Principale */}
                                         <div className="mb-3">
-                                            <input
-                                                type="text"
-                                                placeholder="Nome ingrediente (es. Pollo)"
-                                                value={nuovoIngredienteDB.nome}
-                                                onChange={(e) => setNuovoIngredienteDB({ ...nuovoIngredienteDB, nome: e.target.value })}
-                                                className={inputClass('w-full p-3 border rounded text-base mb-3')}
-                                            />
-                                            <label className={`text-xs block mb-1 ${textSecondary}`}>Unità di misura predefinita</label>
+                                            <label className={`text-xs block mb-1 ${textSecondary}`}>Unità di misura principale *</label>
                                             <select
-                                                value={nuovoIngredienteDB.unitaDefault}
-                                                onChange={(e) => setNuovoIngredienteDB({ ...nuovoIngredienteDB, unitaDefault: e.target.value })}
-                                                className={inputClass('w-full p-3 border rounded text-base mb-3')}
+                                                value={nuovoIngredienteDB.unitaPrincipale}
+                                                onChange={(e) => setNuovoIngredienteDB({
+                                                    ...nuovoIngredienteDB,
+                                                    unitaPrincipale: e.target.value,
+                                                    unitaDefault: e.target.value
+                                                })}
+                                                className={inputClass('w-full p-3 border rounded text-base')}
                                             >
-                                                {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                                <option value="g">Grammi (g)</option>
+                                                <option value="ml">Millilitri (ml)</option>
                                             </select>
+                                            <p className={`text-xs mt-1 ${textSecondary}`}>
+                                                I macro devono essere per <strong>100{nuovoIngredienteDB.unitaPrincipale}</strong>
+                                            </p>
                                         </div>
 
-                                        <div className="bg-blue-50 p-3 rounded mb-3 text-xs text-gray-700">
-                                            <strong>ℹ️ Info:</strong> I macro devono essere per <strong>100g/100ml</strong> dell'ingrediente.
-                                        </div>
-
+                                        {/* Macro */}
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
                                             <input
                                                 type="number"
@@ -1135,46 +1283,250 @@
                                             />
                                         </div>
 
+                                        {/* Conversioni Unità */}
+                                        <div className="mb-3">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <label className={`text-xs font-semibold ${textSecondary}`}>Conversioni Unità (opzionale)</label>
+                                                <button
+                                                    onClick={aggiungiConversione}
+                                                    className="text-xs text-teal-600 hover:text-teal-700"
+                                                >
+                                                    + Aggiungi conversione
+                                                </button>
+                                            </div>
+                                            {nuovoIngredienteDB.conversioniUnita.map((conv, idx) => {
+                                                // Calcola macro convertiti
+                                                const fattore = parseFloat(conv.fattore) || 0;
+                                                const macroConvertiti = fattore > 0 ? {
+                                                    calorie: Math.round((parseFloat(nuovoIngredienteDB.macro.calorie) || 0) * fattore / 100),
+                                                    proteine: ((parseFloat(nuovoIngredienteDB.macro.proteine) || 0) * fattore / 100).toFixed(1),
+                                                    carboidrati: ((parseFloat(nuovoIngredienteDB.macro.carboidrati) || 0) * fattore / 100).toFixed(1),
+                                                    grassi: ((parseFloat(nuovoIngredienteDB.macro.grassi) || 0) * fattore / 100).toFixed(1)
+                                                } : null;
+
+                                                return (
+                                                    <div key={idx} className={`mb-3 p-3 rounded border ${darkMode ? 'bg-gray-600 border-gray-500' : 'bg-gray-100 border-gray-300'}`}>
+                                                        <div className="flex gap-2 mb-2">
+                                                            <select
+                                                                value={conv.unita}
+                                                                onChange={(e) => aggiornaConversione(idx, 'unita', e.target.value)}
+                                                                className={inputClass('flex-1 p-2 border rounded text-sm')}
+                                                            >
+                                                                <option value="">Seleziona unità</option>
+                                                                {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                                            </select>
+                                                            <div className="flex items-center gap-1">
+                                                                <input
+                                                                    type="number"
+                                                                    placeholder="Fattore"
+                                                                    value={conv.fattore}
+                                                                    onChange={(e) => aggiornaConversione(idx, 'fattore', e.target.value)}
+                                                                    className={inputClass('w-20 p-2 border rounded text-sm')}
+                                                                />
+                                                                <span className={`text-xs whitespace-nowrap ${textSecondary}`}>
+                                                                    {nuovoIngredienteDB.unitaPrincipale}
+                                                                </span>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => rimuoviConversione(idx)}
+                                                                className="text-red-600 hover:text-red-700 p-2 flex-shrink-0"
+                                                                title="Rimuovi conversione"
+                                                            >
+                                                                <X />
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Macro convertiti */}
+                                                        {conv.unita && macroConvertiti && (
+                                                            <div className={`pt-2 border-t ${darkMode ? 'border-gray-500' : 'border-gray-300'}`}>
+                                                                <p className={`text-xs mb-1 ${textSecondary}`}>
+                                                                    Macro per 1 {conv.unita}:
+                                                                </p>
+                                                                <div className="grid grid-cols-4 gap-1">
+                                                                    <div className={`text-center p-1 rounded text-xs ${darkMode ? 'bg-gray-700' : 'bg-white'}`}>
+                                                                        <div className="text-red-600 font-bold">{macroConvertiti.calorie}</div>
+                                                                        <div className={textSecondary}>kcal</div>
+                                                                    </div>
+                                                                    <div className={`text-center p-1 rounded text-xs ${darkMode ? 'bg-gray-700' : 'bg-white'}`}>
+                                                                        <div className="text-blue-600 font-bold">{macroConvertiti.proteine}g</div>
+                                                                        <div className={textSecondary}>P</div>
+                                                                    </div>
+                                                                    <div className={`text-center p-1 rounded text-xs ${darkMode ? 'bg-gray-700' : 'bg-white'}`}>
+                                                                        <div className="text-yellow-600 font-bold">{macroConvertiti.carboidrati}g</div>
+                                                                        <div className={textSecondary}>C</div>
+                                                                    </div>
+                                                                    <div className={`text-center p-1 rounded text-xs ${darkMode ? 'bg-gray-700' : 'bg-white'}`}>
+                                                                        <div className="text-green-600 font-bold">{macroConvertiti.grassi}g</div>
+                                                                        <div className={textSecondary}>G</div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                            {nuovoIngredienteDB.conversioniUnita.length > 0 && (
+                                                <p className={`text-xs mt-1 ${textSecondary}`}>
+                                                    Es: 1 pz = 9g significa che 1 pezzo pesa 9 {nuovoIngredienteDB.unitaPrincipale}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Unità Default */}
+                                        {nuovoIngredienteDB.conversioniUnita.length > 0 && (
+                                            <div className="mb-3">
+                                                <label className={`text-xs block mb-1 ${textSecondary}`}>Unità predefinita da mostrare</label>
+                                                <select
+                                                    value={nuovoIngredienteDB.unitaDefault}
+                                                    onChange={(e) => setNuovoIngredienteDB({ ...nuovoIngredienteDB, unitaDefault: e.target.value })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                >
+                                                    <option value={nuovoIngredienteDB.unitaPrincipale}>{nuovoIngredienteDB.unitaPrincipale}</option>
+                                                    {nuovoIngredienteDB.conversioniUnita
+                                                        .filter(conv => conv.unita && conv.fattore)
+                                                        .map((conv, idx) => (
+                                                            <option key={idx} value={conv.unita}>{conv.unita}</option>
+                                                        ))
+                                                    }
+                                                </select>
+                                            </div>
+                                        )}
+
                                         <button
                                             onClick={aggiungiIngredienteDB}
                                             className="w-full bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600 transition min-h-[44px] text-base font-semibold"
                                         >
-                                            Aggiungi al Database
+                                            {editingIngredienteId ? 'Salva Modifiche' : 'Aggiungi al Database'}
                                         </button>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                                        {ingredientiDB.map(ing => (
-                                            <div key={ing.id} className={`border-2 border-teal-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition ${bgAccent}`}>
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div className="flex-1">
-                                                        <h3 className={`font-bold text-base ${textClass}`}>{ing.nome}</h3>
-                                                        <p className={`text-xs ${textSecondary}`}>Unità: {ing.unitaDefault}</p>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => eliminaIngredienteDB(ing.id)}
-                                                        className="text-red-600 hover:text-red-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                                                    >
-                                                        <Trash2 />
-                                                    </button>
-                                                </div>
-                                                <div className="flex flex-wrap gap-1 text-xs">
-                                                    <span className="bg-red-100 text-red-700 px-2 py-1 rounded">
-                                                        {ing.macro.calorie} kcal
-                                                    </span>
-                                                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                                                        P: {ing.macro.proteine}g
-                                                    </span>
-                                                    <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
-                                                        C: {ing.macro.carboidrati}g
-                                                    </span>
-                                                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
-                                                        G: {ing.macro.grassi}g
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
+                                    {/* Filtri e Ordinamento */}
+                                    <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                                        <select
+                                            value={filtroCategoria}
+                                            onChange={(e) => setFiltroCategoria(e.target.value)}
+                                            className={inputClass('flex-1 p-3 border rounded text-base')}
+                                        >
+                                            <option value="Tutte">📂 Tutte le categorie</option>
+                                            {categorie.map(cat => (
+                                                <option key={cat} value={cat}>{cat}</option>
+                                            ))}
+                                        </select>
+                                        <select
+                                            value={ordinamento}
+                                            onChange={(e) => setOrdinamento(e.target.value)}
+                                            className={inputClass('flex-1 p-3 border rounded text-base')}
+                                        >
+                                            <option value="nome">🔤 Ordina per nome</option>
+                                            <option value="categoria">📁 Ordina per categoria</option>
+                                            <option value="calorie">🔥 Ordina per calorie</option>
+                                            <option value="proteine">💪 Ordina per proteine</option>
+                                        </select>
                                     </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                                        {getIngredientiFiltrati().map(ing => {
+                                            // Calcola i macro in base all'unità predefinita
+                                            const unitaDefault = ing.unitaDefault || ing.unitaPrincipale || 'g';
+                                            const unitaPrincipale = ing.unitaPrincipale || 'g';
+
+                                            let macroMostrati = ing.macro;
+                                            let testoDose = `100${unitaPrincipale}`;
+
+                                            // Se l'unità default è diversa dalla principale, cerca la conversione
+                                            if (unitaDefault !== unitaPrincipale && ing.conversioniUnita) {
+                                                const conversione = ing.conversioniUnita.find(c => c.unita === unitaDefault);
+                                                if (conversione && conversione.fattore) {
+                                                    const fattore = parseFloat(conversione.fattore);
+                                                    macroMostrati = {
+                                                        calorie: Math.round((parseFloat(ing.macro.calorie) || 0) * fattore / 100),
+                                                        proteine: ((parseFloat(ing.macro.proteine) || 0) * fattore / 100).toFixed(1),
+                                                        carboidrati: ((parseFloat(ing.macro.carboidrati) || 0) * fattore / 100).toFixed(1),
+                                                        grassi: ((parseFloat(ing.macro.grassi) || 0) * fattore / 100).toFixed(1)
+                                                    };
+                                                    testoDose = `1${unitaDefault}`;
+                                                }
+                                            }
+
+                                            return (
+                                                <div key={ing.id} className={`border-2 border-teal-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition ${bgAccent}`}>
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div className="flex-1">
+                                                            <h3 className={`font-bold text-base ${textClass}`}>{ing.nome}</h3>
+                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                <span className={`text-xs px-2 py-0.5 rounded ${darkMode ? 'bg-teal-900 text-teal-200' : 'bg-teal-100 text-teal-700'}`}>
+                                                                    {ing.categoria || 'Altro'}
+                                                                </span>
+                                                                <span className={`text-xs px-2 py-0.5 rounded ${darkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-700'}`}>
+                                                                    {unitaDefault}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex gap-1">
+                                                            <button
+                                                                onClick={() => modificaIngrediente(ing)}
+                                                                className="text-amber-600 hover:text-amber-700 p-2 min-w-[40px] min-h-[40px] flex items-center justify-center"
+                                                                title="Modifica"
+                                                            >
+                                                                <Edit2 />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => eliminaIngredienteDB(ing.id)}
+                                                                className="text-red-600 hover:text-red-700 p-2 min-w-[40px] min-h-[40px] flex items-center justify-center"
+                                                                title="Elimina"
+                                                            >
+                                                                <Trash2 />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Macro per unità default */}
+                                                    <div className="mb-2">
+                                                        <p className={`text-xs ${textSecondary} mb-1`}>
+                                                            Per {testoDose}:
+                                                        </p>
+                                                        <div className="flex flex-wrap gap-1 text-xs">
+                                                            <span className="bg-red-100 text-red-700 px-2 py-1 rounded">
+                                                                {macroMostrati.calorie} kcal
+                                                            </span>
+                                                            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                                                P: {macroMostrati.proteine}g
+                                                            </span>
+                                                            <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
+                                                                C: {macroMostrati.carboidrati}g
+                                                            </span>
+                                                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
+                                                                G: {macroMostrati.grassi}g
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Conversioni */}
+                                                    {ing.conversioniUnita && ing.conversioniUnita.length > 0 && (
+                                                        <div className="pt-2 border-t border-teal-200">
+                                                            <p className={`text-xs ${textSecondary} mb-1`}>Conversioni:</p>
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {ing.conversioniUnita
+                                                                    .filter(conv => conv.unita && conv.fattore)
+                                                                    .map((conv, idx) => (
+                                                                        <span key={idx} className={`text-xs px-2 py-0.5 rounded ${darkMode ? 'bg-purple-900 text-purple-200' : 'bg-purple-100 text-purple-700'}`}>
+                                                                            1 {conv.unita} = {conv.fattore}{unitaPrincipale}
+                                                                        </span>
+                                                                    ))
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {getIngredientiFiltrati().length === 0 && (
+                                        <div className={`text-center py-8 ${textSecondary}`}>
+                                            <p>Nessun ingrediente trovato con i filtri selezionati.</p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
