@@ -595,10 +595,148 @@
                 unita: 'g',
                 macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' },
                 isRicetta: false,
-                ricettaId: null
+                ricettaId: null,
+                ingredienteDBId: null, // Per tracciare quale ingrediente DB è stato selezionato
+                unitaDisponibili: [] // Unità disponibili per questo ingrediente
             });
 
             const tipiPasto = ['Colazione', 'Spuntino Mattina', 'Pranzo', 'Spuntino Pomeriggio', 'Pre-Workout', 'Post-Workout', 'Cena', 'Spuntino Sera'];
+
+            // Stati per visualizzazione storico
+            const [giorniEspansi, setGiorniEspansi] = useState(new Set([new Date().toISOString().split('T')[0]])); // Oggi sempre espanso
+            const [giorniVisibili, setGiorniVisibili] = useState(7); // Mostra ultimi 7 giorni
+
+            const toggleEspansioneGiorno = (data) => {
+                const nuoviEspansi = new Set(giorniEspansi);
+                if (nuoviEspansi.has(data)) {
+                    nuoviEspansi.delete(data);
+                } else {
+                    nuoviEspansi.add(data);
+                }
+                setGiorniEspansi(nuoviEspansi);
+            };
+
+            const caricaAltriGiorni = () => {
+                setGiorniVisibili(giorniVisibili + 7);
+            };
+
+            // Calcola i macro per un ingrediente in base all'unità e quantità
+            const calcolaMacroIngrediente = (ingrediente, quantita, unita) => {
+                const unitaPrincipale = ingrediente.unitaPrincipale || 'g';
+                let fattoreConversione = 1;
+
+                // Se l'unità non è quella principale, trova il fattore di conversione
+                if (unita !== unitaPrincipale && ingrediente.conversioniUnita) {
+                    const conversione = ingrediente.conversioniUnita.find(c => c.unita === unita);
+                    if (conversione && conversione.fattore) {
+                        // Quantità in unità principale = quantità * fattore
+                        // Es: 2 pz * 9g/pz = 18g
+                        fattoreConversione = parseFloat(conversione.fattore) / 100;
+                    } else {
+                        // Unità non trovata, usa principale
+                        fattoreConversione = parseFloat(quantita) / 100;
+                    }
+                } else {
+                    // Stessa unità principale
+                    fattoreConversione = parseFloat(quantita) / 100;
+                }
+
+                // Se è una conversione, il fattore è già corretto
+                if (unita !== unitaPrincipale) {
+                    const conversione = ingrediente.conversioniUnita?.find(c => c.unita === unita);
+                    if (conversione) {
+                        // quantita * fattore / 100
+                        const grammiTotali = parseFloat(quantita) * parseFloat(conversione.fattore);
+                        fattoreConversione = grammiTotali / 100;
+                    }
+                }
+
+                return {
+                    calorie: Math.round((parseFloat(ingrediente.macro.calorie) || 0) * fattoreConversione),
+                    proteine: ((parseFloat(ingrediente.macro.proteine) || 0) * fattoreConversione).toFixed(1),
+                    carboidrati: ((parseFloat(ingrediente.macro.carboidrati) || 0) * fattoreConversione).toFixed(1),
+                    grassi: ((parseFloat(ingrediente.macro.grassi) || 0) * fattoreConversione).toFixed(1)
+                };
+            };
+
+            const selezionaIngredienteTracking = (ingredienteId) => {
+                if (!ingredienteId) return;
+
+                const ingDB = ingredientiDB.find(i => i.id === parseInt(ingredienteId));
+                if (!ingDB) return;
+
+                // Prepara lista unità disponibili
+                const unitaPrincipale = ingDB.unitaPrincipale || 'g';
+                const unitaDisponibili = [unitaPrincipale];
+
+                if (ingDB.conversioniUnita && ingDB.conversioniUnita.length > 0) {
+                    ingDB.conversioniUnita
+                        .filter(conv => conv.unita && conv.fattore)
+                        .forEach(conv => unitaDisponibili.push(conv.unita));
+                }
+
+                // Usa unità default dell'ingrediente
+                const unitaDefault = ingDB.unitaDefault || unitaPrincipale;
+
+                // Calcola quantità e macro per l'unità default
+                let quantitaDefault = '1';
+                let macroCalcolati;
+
+                if (unitaDefault === unitaPrincipale) {
+                    quantitaDefault = '100';
+                    macroCalcolati = ingDB.macro;
+                } else {
+                    quantitaDefault = '1';
+                    macroCalcolati = calcolaMacroIngrediente(ingDB, 1, unitaDefault);
+                }
+
+                setNuovoPasto({
+                    ...nuovoPasto,
+                    nome: ingDB.nome,
+                    quantita: quantitaDefault,
+                    unita: unitaDefault,
+                    macro: macroCalcolati,
+                    isRicetta: false,
+                    ricettaId: null,
+                    ingredienteDBId: ingDB.id,
+                    unitaDisponibili: unitaDisponibili
+                });
+            };
+
+            const aggiornaQuantitaIngrediente = (quantita) => {
+                if (!nuovoPasto.ingredienteDBId) {
+                    // Nessun ingrediente DB selezionato, update semplice
+                    setNuovoPasto({ ...nuovoPasto, quantita });
+                    return;
+                }
+
+                const ingDB = ingredientiDB.find(i => i.id === nuovoPasto.ingredienteDBId);
+                if (!ingDB) {
+                    setNuovoPasto({ ...nuovoPasto, quantita });
+                    return;
+                }
+
+                // Ricalcola i macro
+                const nuoviMacro = calcolaMacroIngrediente(ingDB, parseFloat(quantita) || 0, nuovoPasto.unita);
+                setNuovoPasto({ ...nuovoPasto, quantita, macro: nuoviMacro });
+            };
+
+            const aggiornaUnitaIngrediente = (unita) => {
+                if (!nuovoPasto.ingredienteDBId) {
+                    setNuovoPasto({ ...nuovoPasto, unita });
+                    return;
+                }
+
+                const ingDB = ingredientiDB.find(i => i.id === nuovoPasto.ingredienteDBId);
+                if (!ingDB) {
+                    setNuovoPasto({ ...nuovoPasto, unita });
+                    return;
+                }
+
+                // Ricalcola i macro con la nuova unità
+                const nuoviMacro = calcolaMacroIngrediente(ingDB, parseFloat(nuovoPasto.quantita) || 0, unita);
+                setNuovoPasto({ ...nuovoPasto, unita, macro: nuoviMacro });
+            };
 
             const aggiungiPasto = () => {
                 if (!nuovoPasto.nome) return;
@@ -612,7 +750,9 @@
                     unita: 'g',
                     macro: { calorie: '', proteine: '', carboidrati: '', grassi: '' },
                     isRicetta: false,
-                    ricettaId: null
+                    ricettaId: null,
+                    ingredienteDBId: null,
+                    unitaDisponibili: []
                 });
             };
 
@@ -1826,29 +1966,13 @@
                                             </select>
                                             <select
                                                 value=""
-                                                onChange={(e) => {
-                                                    if (e.target.value) {
-                                                        const ingDB = ingredientiDB.find(i => i.id === parseInt(e.target.value));
-                                                        if (ingDB) {
-                                                            const macroCalcolati = calcolaMacroDaGrammi({ macro: ingDB.macro }, 100);
-                                                            setNuovoPasto({
-                                                                ...nuovoPasto,
-                                                                nome: ingDB.nome,
-                                                                quantita: '100',
-                                                                unita: ingDB.unitaDefault,
-                                                                macro: macroCalcolati,
-                                                                isRicetta: false,
-                                                                ricettaId: null
-                                                            });
-                                                        }
-                                                    }
-                                                }}
+                                                onChange={(e) => selezionaIngredienteTracking(e.target.value)}
                                                 className={inputClass('w-full p-3 border rounded text-base')}
                                             >
                                                 <option value="">-- Scegli ingrediente singolo --</option>
                                                 {ingredientiDB.map(ingDB => (
                                                     <option key={ingDB.id} value={ingDB.id}>
-                                                        🥕 {ingDB.nome} ({ingDB.unitaDefault})
+                                                        🥕 {ingDB.nome} ({ingDB.unitaDefault || 'g'})
                                                     </option>
                                                 ))}
                                             </select>
@@ -1860,31 +1984,80 @@
                                                 type="text"
                                                 placeholder="Nome alimento"
                                                 value={nuovoPasto.nome}
-                                                onChange={(e) => setNuovoPasto({ ...nuovoPasto, nome: e.target.value })}
+                                                onChange={(e) => setNuovoPasto({ ...nuovoPasto, nome: e.target.value, ingredienteDBId: null, unitaDisponibili: [] })}
                                                 className={inputClass('p-3 border rounded text-base')}
-                                                disabled={nuovoPasto.isRicetta}
+                                                disabled={nuovoPasto.isRicetta || nuovoPasto.ingredienteDBId}
                                             />
                                             <div className="flex gap-2">
                                                 <input
                                                     type="number"
                                                     placeholder="Quantità"
                                                     value={nuovoPasto.quantita}
-                                                    onChange={(e) => aggiornaQuantitaRicetta(e.target.value)}
+                                                    onChange={(e) => {
+                                                        if (nuovoPasto.isRicetta) {
+                                                            aggiornaQuantitaRicetta(e.target.value);
+                                                        } else if (nuovoPasto.ingredienteDBId) {
+                                                            aggiornaQuantitaIngrediente(e.target.value);
+                                                        } else {
+                                                            setNuovoPasto({ ...nuovoPasto, quantita: e.target.value });
+                                                        }
+                                                    }}
                                                     className={inputClass('flex-1 p-3 border rounded text-base')}
                                                 />
                                                 <select
                                                     value={nuovoPasto.unita}
-                                                    onChange={(e) => setNuovoPasto({ ...nuovoPasto, unita: e.target.value })}
+                                                    onChange={(e) => {
+                                                        if (nuovoPasto.ingredienteDBId) {
+                                                            aggiornaUnitaIngrediente(e.target.value);
+                                                        } else {
+                                                            setNuovoPasto({ ...nuovoPasto, unita: e.target.value });
+                                                        }
+                                                    }}
                                                     className={inputClass('p-3 border rounded text-base')}
                                                     disabled={nuovoPasto.isRicetta}
                                                 >
-                                                    <option value="g">g</option>
-                                                    <option value="kg">kg</option>
-                                                    <option value="porzione">porzione</option>
-                                                    {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                                    {nuovoPasto.ingredienteDBId && nuovoPasto.unitaDisponibili.length > 0 ? (
+                                                        nuovoPasto.unitaDisponibili.map(u => (
+                                                            <option key={u} value={u}>{u}</option>
+                                                        ))
+                                                    ) : (
+                                                        <>
+                                                            <option value="g">g</option>
+                                                            <option value="kg">kg</option>
+                                                            <option value="porzione">porzione</option>
+                                                            {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                                        </>
+                                                    )}
                                                 </select>
                                             </div>
                                         </div>
+
+                                        {/* Preview macro calcolati automaticamente */}
+                                        {(nuovoPasto.ingredienteDBId || nuovoPasto.isRicetta) && nuovoPasto.nome && nuovoPasto.quantita && (
+                                            <div className={`mb-3 p-3 rounded border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-blue-50 border-blue-200'}`}>
+                                                <p className={`text-xs mb-2 ${textSecondary}`}>
+                                                    📊 Macro calcolati per {nuovoPasto.quantita} {nuovoPasto.unita} di {nuovoPasto.nome}:
+                                                </p>
+                                                <div className="grid grid-cols-4 gap-2">
+                                                    <div className={`text-center p-2 rounded ${darkMode ? 'bg-gray-600' : 'bg-white'}`}>
+                                                        <div className="text-red-600 font-bold text-lg">{nuovoPasto.macro.calorie || 0}</div>
+                                                        <div className={`text-xs ${textSecondary}`}>kcal</div>
+                                                    </div>
+                                                    <div className={`text-center p-2 rounded ${darkMode ? 'bg-gray-600' : 'bg-white'}`}>
+                                                        <div className="text-blue-600 font-bold text-lg">{nuovoPasto.macro.proteine || 0}g</div>
+                                                        <div className={`text-xs ${textSecondary}`}>Prot</div>
+                                                    </div>
+                                                    <div className={`text-center p-2 rounded ${darkMode ? 'bg-gray-600' : 'bg-white'}`}>
+                                                        <div className="text-yellow-600 font-bold text-lg">{nuovoPasto.macro.carboidrati || 0}g</div>
+                                                        <div className={`text-xs ${textSecondary}`}>Carb</div>
+                                                    </div>
+                                                    <div className={`text-center p-2 rounded ${darkMode ? 'bg-gray-600' : 'bg-white'}`}>
+                                                        <div className="text-green-600 font-bold text-lg">{nuovoPasto.macro.grassi || 0}g</div>
+                                                        <div className={`text-xs ${textSecondary}`}>Grass</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
                                             <input
@@ -1896,6 +2069,7 @@
                                                     macro: { ...nuovoPasto.macro, calorie: e.target.value }
                                                 })}
                                                 className={inputClass('p-3 border rounded text-base')}
+                                                disabled={nuovoPasto.ingredienteDBId || nuovoPasto.isRicetta}
                                             />
                                             <input
                                                 type="number"
@@ -1906,6 +2080,7 @@
                                                     macro: { ...nuovoPasto.macro, proteine: e.target.value }
                                                 })}
                                                 className={inputClass('p-3 border rounded text-base')}
+                                                disabled={nuovoPasto.ingredienteDBId || nuovoPasto.isRicetta}
                                             />
                                             <input
                                                 type="number"
@@ -1916,6 +2091,7 @@
                                                     macro: { ...nuovoPasto.macro, carboidrati: e.target.value }
                                                 })}
                                                 className={inputClass('p-3 border rounded text-base')}
+                                                disabled={nuovoPasto.ingredienteDBId || nuovoPasto.isRicetta}
                                             />
                                             <input
                                                 type="number"
@@ -1926,6 +2102,7 @@
                                                     macro: { ...nuovoPasto.macro, grassi: e.target.value }
                                                 })}
                                                 className={inputClass('p-3 border rounded text-base')}
+                                                disabled={nuovoPasto.ingredienteDBId || nuovoPasto.isRicetta}
                                             />
                                         </div>
 
@@ -1983,55 +2160,172 @@
                                                 pastiRaggruppati[data][tipoPasto].push(pasto);
                                             });
 
-                                            return Object.entries(pastiRaggruppati).map(([data, pastiPerTipo]) => (
-                                                <div key={data} className={`border-2 border-purple-200 rounded-lg p-3 sm:p-4 ${cardClass}`}>
-                                                    <h3 className="font-bold text-lg text-purple-700 mb-3">
-                                                        {new Date(data + 'T00:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
-                                                    </h3>
+                                            // Ordina le date e prendi solo i giorni visibili
+                                            const dateOrdinate = Object.keys(pastiRaggruppati).sort((a, b) => b.localeCompare(a));
+                                            const dateVisibili = dateOrdinate.slice(0, giorniVisibili);
+                                            const ciSonoAltriGiorni = dateOrdinate.length > giorniVisibili;
 
-                                                    {Object.entries(pastiPerTipo).map(([tipoPasto, pastiDelTipo]) => (
-                                                        <div key={tipoPasto} className="mb-3 last:mb-0">
-                                                            <h4 className="font-semibold text-sm text-purple-600 mb-2 flex items-center gap-2">
-                                                                <span className="bg-purple-100 px-2 py-1 rounded">{tipoPasto}</span>
-                                                            </h4>
-                                                            <div className="space-y-2 ml-0 sm:ml-4">
-                                                                {pastiDelTipo.map(pasto => (
-                                                                    <div key={pasto.id} className={`border rounded-lg p-2 sm:p-3 transition ${bgAccent} hover:opacity-80`}>
-                                                                        <div className="flex justify-between items-start gap-2 mb-2">
-                                                                            <div className="flex-1">
-                                                                                <h5 className={`font-semibold text-sm ${textClass}`}>{pasto.nome}</h5>
-                                                                                <p className={`text-xs ${textSecondary}`}>
-                                                                                    {pasto.quantita} {pasto.unita}
-                                                                                </p>
+                                            return (
+                                                <>
+                                                    {dateVisibili.map((data, idx) => {
+                                                        const pastiPerTipo = pastiRaggruppati[data];
+                                                        const oggi = new Date().toISOString().split('T')[0];
+                                                        const isOggi = data === oggi;
+                                                        const isEspanso = giorniEspansi.has(data);
+
+                                                        // Calcola totali del giorno
+                                                        const totaliGiorno = totaliGiornalieri(data);
+
+                                                        // Calcola totali per tipo pasto
+                                                        const totaliPerPasto = {};
+                                                        Object.entries(pastiPerTipo).forEach(([tipoPasto, pastiDelTipo]) => {
+                                                            totaliPerPasto[tipoPasto] = pastiDelTipo.reduce((acc, p) => ({
+                                                                calorie: acc.calorie + (parseFloat(p.macro.calorie) || 0),
+                                                                proteine: acc.proteine + (parseFloat(p.macro.proteine) || 0),
+                                                                carboidrati: acc.carboidrati + (parseFloat(p.macro.carboidrati) || 0),
+                                                                grassi: acc.grassi + (parseFloat(p.macro.grassi) || 0)
+                                                            }), { calorie: 0, proteine: 0, carboidrati: 0, grassi: 0 });
+                                                        });
+
+                                                        return (
+                                                            <div key={data} className={`border-2 rounded-lg overflow-hidden transition-all ${
+                                                                isOggi
+                                                                    ? 'border-purple-400 shadow-lg'
+                                                                    : 'border-purple-200'
+                                                            } ${cardClass}`}>
+                                                                {/* Header cliccabile */}
+                                                                <div
+                                                                    onClick={() => !isOggi && toggleEspansioneGiorno(data)}
+                                                                    className={`p-3 sm:p-4 ${!isOggi ? 'cursor-pointer hover:opacity-80' : ''} ${
+                                                                        isOggi ? (darkMode ? 'bg-purple-900/30' : 'bg-purple-50') : ''
+                                                                    }`}
+                                                                >
+                                                                    <div className="flex justify-between items-start mb-2">
+                                                                        <div>
+                                                                            <h3 className={`font-bold text-lg ${isOggi ? 'text-purple-700' : textClass}`}>
+                                                                                {isOggi ? '📅 Oggi' : ''} {new Date(data + 'T00:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                                                            </h3>
+                                                                            {!isOggi && !isEspanso && (
+                                                                                <p className={`text-xs ${textSecondary}`}>Click per espandere</p>
+                                                                            )}
+                                                                        </div>
+                                                                        {!isOggi && (
+                                                                            <div className="text-purple-600">
+                                                                                {isEspanso ? '▼' : '▶'}
                                                                             </div>
-                                                                            <button
-                                                                                onClick={() => eliminaPasto(pasto.id)}
-                                                                                className="text-red-600 hover:text-red-700 p-1 min-w-[36px] min-h-[36px] flex items-center justify-center flex-shrink-0"
-                                                                            >
-                                                                                <Trash2 />
-                                                                            </button>
-                                                                        </div>
-                                                                        <div className="flex flex-wrap gap-1 text-xs">
-                                                                            <span className="bg-red-100 text-red-700 px-2 py-1 rounded">
-                                                                                {pasto.macro.calorie} kcal
-                                                                            </span>
-                                                                            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                                                                                P: {pasto.macro.proteine}g
-                                                                            </span>
-                                                                            <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
-                                                                                C: {pasto.macro.carboidrati}g
-                                                                            </span>
-                                                                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
-                                                                                G: {pasto.macro.grassi}g
-                                                                            </span>
-                                                                        </div>
+                                                                        )}
                                                                     </div>
-                                                                ))}
+
+                                                                    {/* Totali giorno sempre visibili */}
+                                                                    <div className="flex flex-wrap gap-2">
+                                                                        <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-red-900/50 text-red-200' : 'bg-red-100 text-red-700'}`}>
+                                                                            {totaliGiorno.calorie.toFixed(0)} kcal
+                                                                        </span>
+                                                                        <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-blue-900/50 text-blue-200' : 'bg-blue-100 text-blue-700'}`}>
+                                                                            P: {totaliGiorno.proteine.toFixed(1)}g
+                                                                        </span>
+                                                                        <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-yellow-900/50 text-yellow-200' : 'bg-yellow-100 text-yellow-700'}`}>
+                                                                            C: {totaliGiorno.carboidrati.toFixed(1)}g
+                                                                        </span>
+                                                                        <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-green-900/50 text-green-200' : 'bg-green-100 text-green-700'}`}>
+                                                                            G: {totaliGiorno.grassi.toFixed(1)}g
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Contenuto espandibile */}
+                                                                {isEspanso && (
+                                                                    <div className={`p-3 sm:p-4 border-t ${darkMode ? 'border-gray-700' : 'border-purple-100'}`}>
+                                                                        {tipiPasto
+                                                                            .filter(tipo => pastiPerTipo[tipo])
+                                                                            .map(tipoPasto => {
+                                                                                const pastiDelTipo = pastiPerTipo[tipoPasto];
+                                                                                return (
+                                                                            <div key={tipoPasto} className="mb-4 last:mb-0">
+                                                                                {/* Header tipo pasto con totali */}
+                                                                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                                                    <h4 className="font-semibold text-sm text-purple-600">
+                                                                                        <span className={`px-2 py-1 rounded ${darkMode ? 'bg-purple-900/50' : 'bg-purple-100'}`}>
+                                                                                            {tipoPasto}
+                                                                                        </span>
+                                                                                    </h4>
+                                                                                    <div className="flex flex-wrap gap-1">
+                                                                                        <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">
+                                                                                            {totaliPerPasto[tipoPasto].calorie.toFixed(0)} kcal
+                                                                                        </span>
+                                                                                        <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                                                                                            P: {totaliPerPasto[tipoPasto].proteine.toFixed(1)}g
+                                                                                        </span>
+                                                                                        <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">
+                                                                                            C: {totaliPerPasto[tipoPasto].carboidrati.toFixed(1)}g
+                                                                                        </span>
+                                                                                        <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
+                                                                                            G: {totaliPerPasto[tipoPasto].grassi.toFixed(1)}g
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                {/* Lista pasti */}
+                                                                                <div className="space-y-2 ml-0 sm:ml-4">
+                                                                                    {pastiDelTipo.map(pasto => (
+                                                                                        <div key={pasto.id} className={`border rounded-lg p-2 sm:p-3 transition ${bgAccent} hover:opacity-80`}>
+                                                                                            <div className="flex justify-between items-start gap-2 mb-2">
+                                                                                                <div className="flex-1">
+                                                                                                    <h5 className={`font-semibold text-sm ${textClass}`}>{pasto.nome}</h5>
+                                                                                                    <p className={`text-xs ${textSecondary}`}>
+                                                                                                        {pasto.quantita} {pasto.unita}
+                                                                                                    </p>
+                                                                                                </div>
+                                                                                                <button
+                                                                                                    onClick={() => eliminaPasto(pasto.id)}
+                                                                                                    className="text-red-600 hover:text-red-700 p-1 min-w-[36px] min-h-[36px] flex items-center justify-center flex-shrink-0"
+                                                                                                >
+                                                                                                    <Trash2 />
+                                                                                                </button>
+                                                                                            </div>
+                                                                                            <div className="flex flex-wrap gap-1 text-xs">
+                                                                                                <span className="bg-red-100 text-red-700 px-2 py-1 rounded">
+                                                                                                    {pasto.macro.calorie} kcal
+                                                                                                </span>
+                                                                                                <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                                                                                    P: {pasto.macro.proteine}g
+                                                                                                </span>
+                                                                                                <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
+                                                                                                    C: {pasto.macro.carboidrati}g
+                                                                                                </span>
+                                                                                                <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
+                                                                                                    G: {pasto.macro.grassi}g
+                                                                                                </span>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                                );
+                                                                            })}
+                                                                    </div>
+                                                                )}
                                                             </div>
+                                                        );
+                                                    })}
+
+                                                    {/* Pulsante Vedi altri */}
+                                                    {ciSonoAltriGiorni && (
+                                                        <div className="flex justify-center">
+                                                            <button
+                                                                onClick={caricaAltriGiorni}
+                                                                className={`px-6 py-3 rounded-lg font-semibold transition ${
+                                                                    darkMode
+                                                                        ? 'bg-purple-700 hover:bg-purple-600 text-white'
+                                                                        : 'bg-purple-100 hover:bg-purple-200 text-purple-700'
+                                                                }`}
+                                                            >
+                                                                ⬇️ Carica altri 7 giorni
+                                                            </button>
                                                         </div>
-                                                    ))}
-                                                </div>
-                                            ));
+                                                    )}
+                                                </>
+                                            );
                                         })()}
                                     </div>
                                 </div>
