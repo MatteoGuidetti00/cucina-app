@@ -921,24 +921,7 @@
                 }
             };
 
-            const importaDati = async (e) => {
-                // Prima prova a leggere dagli appunti
-                try {
-                    const clipboardText = await navigator.clipboard.readText();
-                    if (clipboardText && clipboardText.trim().startsWith('{')) {
-                        // Sembra un JSON, prova a importare
-                        const successo = processaImport(clipboardText, 'appunti');
-                        if (successo) {
-                            // Reset del file input per permettere import successivi
-                            e.target.value = '';
-                            return;
-                        }
-                    }
-                } catch (error) {
-                    // Clipboard non disponibile o errore, continua con il file
-                }
-
-                // Se appunti non ha dati validi, usa il file
+            const importaDaFile = (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
 
@@ -952,6 +935,22 @@
                     e.target.value = '';
                 };
                 reader.readAsText(file);
+            };
+
+            const importaDaClipboard = async () => {
+                try {
+                    const clipboardText = await navigator.clipboard.readText();
+                    if (clipboardText && clipboardText.trim().startsWith('{')) {
+                        const successo = processaImport(clipboardText, 'appunti');
+                        if (!successo) {
+                            alert('❌ Errore nell\'importazione.\n\nGli appunti non contengono un backup valido.');
+                        }
+                    } else {
+                        alert('⚠️ Gli appunti non contengono un JSON valido.\n\nCopia prima il contenuto del backup esportato.');
+                    }
+                } catch (error) {
+                    alert('❌ Impossibile leggere dagli appunti.\n\nSu mobile, usa l\'importazione da file oppure concedi i permessi clipboard.');
+                }
             };
 
             return (
@@ -998,9 +997,18 @@
                                     </button>
                                     <label className="flex items-center gap-2 bg-green-500 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-green-600 transition cursor-pointer text-sm sm:text-base min-h-[44px]">
                                         <Upload />
-                                        <span className="hidden xs:inline">Importa</span>
-                                        <input type="file" accept=".json" onChange={importaDati} className="hidden" />
+                                        <span className="hidden xs:inline">Da File</span>
+                                        <input type="file" accept=".json" onChange={importaDaFile} className="hidden" />
                                     </label>
+                                    <button
+                                        onClick={importaDaClipboard}
+                                        className="flex items-center gap-2 bg-teal-500 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-teal-600 transition text-sm sm:text-base min-h-[44px]"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                        <span className="hidden xs:inline">Da Appunti</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
