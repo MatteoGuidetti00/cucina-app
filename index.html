@@ -1481,7 +1481,7 @@
                                                 : calcolaMacroDaGrammi(ricetta, 100);
 
                                             return (
-                                                <div key={ricetta.id} className={`border rounded-lg p-3 sm:p-4 hover:shadow-md transition ${cardClass}`}>
+                                                <div key={ricetta.id} className={`glass-card p-3 sm:p-4 hover:shadow-lg transition-all ${cardClass}`}>
                                                     <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2 mb-2">
                                                         <div className="flex-1 cursor-pointer" onClick={() => toggleCardExpand('ricette', ricetta.id)}>
                                                             <h3 className={`text-lg sm:text-xl font-semibold ${textClass}`}>{ricetta.nome}</h3>
@@ -2050,7 +2050,7 @@
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                         {inventario.map(item => (
-                                            <div key={item.id} className={`border rounded-lg p-3 sm:p-4 hover:shadow-md transition ${cardClass}`}>
+                                            <div key={item.id} className={`glass-card p-3 sm:p-4 hover:shadow-lg transition-all ${cardClass}`}>
                                                 {editingId === item.id ? (
                                                     <div className="space-y-2">
                                                         <input
