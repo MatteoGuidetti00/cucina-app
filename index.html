@@ -173,6 +173,15 @@
             const [darkMode, setDarkMode] = useState(false);
             const [modalType, setModalType] = useState(null); // 'export' o 'import'
 
+            // Stati per collapse dei form di inserimento
+            const [formCollapsed, setFormCollapsed] = useState({
+                ricette: true,
+                ingredienti: true,
+                inventario: true,
+                spesa: true,
+                tracking: true
+            });
+
             // Helper per classi dark mode
             const inputClass = (base = '') => `${base} ${darkMode ? 'dark-input' : 'bg-white border-gray-300'}`;
             const textClass = darkMode ? 'text-gray-100' : 'text-gray-800';
@@ -1065,26 +1074,39 @@
                         }`}>
                             {activeTab === 'ricette' && (
                                 <div>
-                                    <h2 className={`text-xl sm:text-2xl font-bold mb-3 sm:mb-4 transition-colors ${
-                                        darkMode ? 'text-gray-100' : 'text-gray-800'
-                                    }`}>Le Mie Ricette</h2>
+                                    <div className="flex justify-between items-center mb-3 sm:mb-4">
+                                        <h2 className={`text-xl sm:text-2xl font-bold transition-colors ${
+                                            darkMode ? 'text-gray-100' : 'text-gray-800'
+                                        }`}>Le Mie Ricette</h2>
+                                        <button
+                                            onClick={() => setFormCollapsed({ ...formCollapsed, ricette: !formCollapsed.ricette })}
+                                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition text-sm sm:text-base font-semibold min-h-[44px] ${
+                                                darkMode
+                                                    ? 'bg-orange-600 hover:bg-orange-700 text-white'
+                                                    : 'bg-orange-500 hover:bg-orange-600 text-white'
+                                            }`}
+                                        >
+                                            {formCollapsed.ricette ? '+ Aggiungi' : '− Chiudi'}
+                                        </button>
+                                    </div>
 
-                                    <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 transition-colors ${
-                                        darkMode ? 'bg-gray-700' : 'bg-orange-50'
-                                    }`}>
-                                        <div className="flex justify-between items-center mb-3">
-                                            <h3 className={`font-semibold text-sm sm:text-base ${textClass}`}>
-                                                {editingRecipeId ? 'Modifica Ricetta' : 'Aggiungi Ricetta'}
-                                            </h3>
-                                            {editingRecipeId && (
-                                                <button
-                                                    onClick={annullaModificaRicetta}
-                                                    className="text-red-600 hover:text-red-700 text-sm"
-                                                >
-                                                    Annulla
-                                                </button>
-                                            )}
-                                        </div>
+                                    {!formCollapsed.ricette && (
+                                        <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 transition-colors ${
+                                            darkMode ? 'bg-gray-700' : 'bg-orange-50'
+                                        }`}>
+                                            <div className="flex justify-between items-center mb-3">
+                                                <h3 className={`font-semibold text-sm sm:text-base ${textClass}`}>
+                                                    {editingRecipeId ? 'Modifica Ricetta' : 'Aggiungi Ricetta'}
+                                                </h3>
+                                                {editingRecipeId && (
+                                                    <button
+                                                        onClick={annullaModificaRicetta}
+                                                        className="text-red-600 hover:text-red-700 text-sm"
+                                                    >
+                                                        Annulla
+                                                    </button>
+                                                )}
+                                            </div>
                                         <input
                                             type="text"
                                             placeholder="Nome ricetta"
@@ -1274,13 +1296,14 @@
                                             </button>
                                         </div>
 
-                                        <button
-                                            onClick={aggiungiRicetta}
-                                            className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition min-h-[44px] text-base font-semibold"
-                                        >
-                                            {editingRecipeId ? 'Salva Modifiche' : 'Aggiungi Ricetta'}
-                                        </button>
-                                    </div>
+                                            <button
+                                                onClick={aggiungiRicetta}
+                                                className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition min-h-[44px] text-base font-semibold"
+                                            >
+                                                {editingRecipeId ? 'Salva Modifiche' : 'Aggiungi Ricetta'}
+                                            </button>
+                                        </div>
+                                    )}
 
                                     <div className="space-y-3 sm:space-y-4">
                                         {ricette.map(ricetta => (
@@ -1383,22 +1406,35 @@
 
                             {activeTab === 'ingredienti' && (
                                 <div>
-                                    <h2 className={`text-xl sm:text-2xl font-bold mb-3 sm:mb-4 ${textClass}`}>🥕 Database Ingredienti</h2>
+                                    <div className="flex justify-between items-center mb-3 sm:mb-4">
+                                        <h2 className={`text-xl sm:text-2xl font-bold ${textClass}`}>🥕 Database Ingredienti</h2>
+                                        <button
+                                            onClick={() => setFormCollapsed({ ...formCollapsed, ingredienti: !formCollapsed.ingredienti })}
+                                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition text-sm sm:text-base font-semibold min-h-[44px] ${
+                                                darkMode
+                                                    ? 'bg-teal-600 hover:bg-teal-700 text-white'
+                                                    : 'bg-teal-500 hover:bg-teal-600 text-white'
+                                            }`}
+                                        >
+                                            {formCollapsed.ingredienti ? '+ Aggiungi' : '− Chiudi'}
+                                        </button>
+                                    </div>
 
-                                    <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 ${bgAccent}`}>
-                                        <div className="flex justify-between items-center mb-3">
-                                            <h3 className={`font-semibold text-sm sm:text-base ${textClass}`}>
-                                                {editingIngredienteId ? 'Modifica Ingrediente' : 'Aggiungi Ingrediente'}
-                                            </h3>
-                                            {editingIngredienteId && (
-                                                <button
-                                                    onClick={annullaModificaIngrediente}
-                                                    className="text-red-600 hover:text-red-700 text-sm"
-                                                >
-                                                    Annulla
-                                                </button>
-                                            )}
-                                        </div>
+                                    {!formCollapsed.ingredienti && (
+                                        <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 ${bgAccent}`}>
+                                            <div className="flex justify-between items-center mb-3">
+                                                <h3 className={`font-semibold text-sm sm:text-base ${textClass}`}>
+                                                    {editingIngredienteId ? 'Modifica Ingrediente' : 'Aggiungi Ingrediente'}
+                                                </h3>
+                                                {editingIngredienteId && (
+                                                    <button
+                                                        onClick={annullaModificaIngrediente}
+                                                        className="text-red-600 hover:text-red-700 text-sm"
+                                                    >
+                                                        Annulla
+                                                    </button>
+                                                )}
+                                            </div>
 
                                         {/* Nome e Categoria */}
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
@@ -1597,13 +1633,14 @@
                                             </div>
                                         )}
 
-                                        <button
-                                            onClick={aggiungiIngredienteDB}
-                                            className="w-full bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600 transition min-h-[44px] text-base font-semibold"
-                                        >
-                                            {editingIngredienteId ? 'Salva Modifiche' : 'Aggiungi al Database'}
-                                        </button>
-                                    </div>
+                                            <button
+                                                onClick={aggiungiIngredienteDB}
+                                                className="w-full bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600 transition min-h-[44px] text-base font-semibold"
+                                            >
+                                                {editingIngredienteId ? 'Salva Modifiche' : 'Aggiungi al Database'}
+                                            </button>
+                                        </div>
+                                    )}
 
                                     {/* Filtri e Ordinamento */}
                                     <div className="flex flex-col sm:flex-row gap-2 mb-4">
@@ -1737,9 +1774,22 @@
 
                             {activeTab === 'inventario' && (
                                 <div>
-                                    <h2 className={`text-xl sm:text-2xl font-bold mb-3 sm:mb-4 ${textClass}`}>Inventario Ingredienti</h2>
+                                    <div className="flex justify-between items-center mb-3 sm:mb-4">
+                                        <h2 className={`text-xl sm:text-2xl font-bold ${textClass}`}>Inventario Ingredienti</h2>
+                                        <button
+                                            onClick={() => setFormCollapsed({ ...formCollapsed, inventario: !formCollapsed.inventario })}
+                                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition text-sm sm:text-base font-semibold min-h-[44px] ${
+                                                darkMode
+                                                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                                    : 'bg-blue-500 hover:bg-blue-600 text-white'
+                                            }`}
+                                        >
+                                            {formCollapsed.inventario ? '+ Aggiungi' : '− Chiudi'}
+                                        </button>
+                                    </div>
 
-                                    <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 flex flex-col gap-2 ${bgAccent}`}>
+                                    {!formCollapsed.inventario && (
+                                        <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 flex flex-col gap-2 ${bgAccent}`}>
                                         <select
                                             value=""
                                             onChange={(e) => {
@@ -1784,13 +1834,14 @@
                                                 {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
                                             </select>
                                         </div>
-                                        <button
-                                            onClick={aggiungiInventario}
-                                            className="w-full bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition min-h-[44px] font-semibold"
-                                        >
-                                            Aggiungi
-                                        </button>
-                                    </div>
+                                            <button
+                                                onClick={aggiungiInventario}
+                                                className="w-full bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition min-h-[44px] font-semibold"
+                                            >
+                                                Aggiungi
+                                            </button>
+                                        </div>
+                                    )}
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                         {inventario.map(item => (
@@ -1855,9 +1906,22 @@
 
                             {activeTab === 'spesa' && (
                                 <div>
-                                    <h2 className={`text-xl sm:text-2xl font-bold mb-3 sm:mb-4 ${textClass}`}>Lista della Spesa</h2>
+                                    <div className="flex justify-between items-center mb-3 sm:mb-4">
+                                        <h2 className={`text-xl sm:text-2xl font-bold ${textClass}`}>Lista della Spesa</h2>
+                                        <button
+                                            onClick={() => setFormCollapsed({ ...formCollapsed, spesa: !formCollapsed.spesa })}
+                                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition text-sm sm:text-base font-semibold min-h-[44px] ${
+                                                darkMode
+                                                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                                                    : 'bg-green-500 hover:bg-green-600 text-white'
+                                            }`}
+                                        >
+                                            {formCollapsed.spesa ? '+ Aggiungi' : '− Chiudi'}
+                                        </button>
+                                    </div>
 
-                                    <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 flex flex-col gap-2 ${bgAccent}`}>
+                                    {!formCollapsed.spesa && (
+                                        <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 flex flex-col gap-2 ${bgAccent}`}>
                                         <select
                                             value=""
                                             onChange={(e) => {
@@ -1903,13 +1967,14 @@
                                                 {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
                                             </select>
                                         </div>
-                                        <button
-                                            onClick={aggiungiSpesa}
-                                            className="w-full bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition min-h-[44px] font-semibold"
-                                        >
-                                            Aggiungi
-                                        </button>
-                                    </div>
+                                            <button
+                                                onClick={aggiungiSpesa}
+                                                className="w-full bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition min-h-[44px] font-semibold"
+                                            >
+                                                Aggiungi
+                                            </button>
+                                        </div>
+                                    )}
 
                                     <div className="space-y-2">
                                         {listaSpesa.map(item => (
@@ -1949,10 +2014,23 @@
 
                             {activeTab === 'tracking' && (
                                 <div>
-                                    <h2 className={`text-xl sm:text-2xl font-bold mb-3 sm:mb-4 ${textClass}`}>Tracking Pasti</h2>
+                                    <div className="flex justify-between items-center mb-3 sm:mb-4">
+                                        <h2 className={`text-xl sm:text-2xl font-bold ${textClass}`}>Tracking Pasti</h2>
+                                        <button
+                                            onClick={() => setFormCollapsed({ ...formCollapsed, tracking: !formCollapsed.tracking })}
+                                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition text-sm sm:text-base font-semibold min-h-[44px] ${
+                                                darkMode
+                                                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                                                    : 'bg-purple-500 hover:bg-purple-600 text-white'
+                                            }`}
+                                        >
+                                            {formCollapsed.tracking ? '+ Aggiungi' : '− Chiudi'}
+                                        </button>
+                                    </div>
 
-                                    <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 ${bgAccent}`}>
-                                        <h3 className={`font-semibold mb-3 text-sm sm:text-base ${textClass}`}>Registra Pasto</h3>
+                                    {!formCollapsed.tracking && (
+                                        <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 ${bgAccent}`}>
+                                            <h3 className={`font-semibold mb-3 text-sm sm:text-base ${textClass}`}>Registra Pasto</h3>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
                                             <input
@@ -2128,13 +2206,14 @@
                                             />
                                         </div>
 
-                                        <button
-                                            onClick={aggiungiPasto}
-                                            className="w-full bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 transition min-h-[44px] font-semibold"
-                                        >
-                                            Registra Pasto
-                                        </button>
-                                    </div>
+                                            <button
+                                                onClick={aggiungiPasto}
+                                                className="w-full bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 transition min-h-[44px] font-semibold"
+                                            >
+                                                Registra Pasto
+                                            </button>
+                                        </div>
+                                    )}
 
                                     {pasti.length > 0 && (
                                         <div className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg ${darkMode ? 'bg-gradient-to-r from-purple-900 to-pink-900' : 'bg-gradient-to-r from-purple-100 to-pink-100'}`}>
