@@ -1259,8 +1259,10 @@
                                     </div>
 
                                     {!formCollapsed.ricette && (
-                                        <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 transition-colors ${
-                                            darkMode ? 'bg-gray-700' : 'bg-slate-50'
+                                        <div className={`p-4 sm:p-6 rounded-xl mb-6 transition-all border ${
+                                            darkMode
+                                                ? 'bg-slate-800 border-slate-700'
+                                                : 'bg-slate-50 border-slate-200'
                                         }`}>
                                             <div className="flex justify-between items-center mb-3">
                                                 <h3 className={`font-semibold text-sm sm:text-base ${textClass}`}>
@@ -1275,18 +1277,26 @@
                                                     </button>
                                                 )}
                                             </div>
-                                        <input
-                                            type="text"
-                                            placeholder="Nome ricetta"
-                                            value={nuovaRicetta.nome}
-                                            onChange={(e) => setNuovaRicetta({ ...nuovaRicetta, nome: e.target.value })}
-                                            className={inputClass('w-full p-3 border rounded mb-3 text-base')}
-                                        />
-
                                         <div className="mb-3">
-                                            <label className={`font-semibold block mb-2 text-sm sm:text-base ${textClass}`}>Ingredienti:</label>
+                                            <label className={`text-xs font-semibold block mb-1.5 ${textClass}`}>Nome ricetta</label>
+                                            <input
+                                                type="text"
+                                                placeholder="es. Pasta al pomodoro"
+                                                value={nuovaRicetta.nome}
+                                                onChange={(e) => setNuovaRicetta({ ...nuovaRicetta, nome: e.target.value })}
+                                                className={inputClass('w-full p-3 border rounded text-base')}
+                                            />
+                                        </div>
+
+                                        <div className="mb-4">
+                                            <label className={`font-semibold block mb-3 text-sm sm:text-base ${textClass}`}>Ingredienti</label>
+                                            <div className="space-y-3">
                                             {nuovaRicetta.ingredienti.map((ing, idx) => (
-                                                <div key={idx} className={`flex flex-col gap-2 mb-3 p-2 rounded ${bgAccent}`}>
+                                                <div key={idx} className={`p-3 rounded-lg border transition-all ${
+                                                    darkMode
+                                                        ? 'bg-slate-800 border-slate-700 hover:border-slate-600'
+                                                        : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'
+                                                }`}>
                                                     <select
                                                         value=""
                                                         onChange={(e) => {
@@ -1310,56 +1320,70 @@
                                                             <option key={ingDB.id} value={ingDB.id}>{ingDB.nome}</option>
                                                         ))}
                                                     </select>
-                                                    <div className="flex flex-col sm:flex-row gap-2">
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nome ingrediente"
-                                                            value={ing.nome}
-                                                            onChange={(e) => {
-                                                                const nuoviIng = [...nuovaRicetta.ingredienti];
-                                                                nuoviIng[idx].nome = e.target.value;
-                                                                setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
-                                                            }}
-                                                            className={inputClass('flex-1 p-3 border rounded text-base')}
-                                                        />
-                                                        <div className="flex gap-2">
-                                                        <input
-                                                            type="number"
-                                                            placeholder="Qtà"
-                                                            value={ing.quantita}
-                                                            onChange={(e) => {
-                                                                const nuoviIng = [...nuovaRicetta.ingredienti];
-                                                                nuoviIng[idx].quantita = e.target.value;
-                                                                setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
-                                                            }}
-                                                            className={inputClass('w-24 p-3 border rounded text-base')}
-                                                        />
-                                                        <select
-                                                            value={ing.unita}
-                                                            onChange={(e) => {
-                                                                const nuoviIng = [...nuovaRicetta.ingredienti];
-                                                                nuoviIng[idx].unita = e.target.value;
-                                                                setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
-                                                            }}
-                                                            className={inputClass('flex-1 sm:w-32 p-3 border rounded text-base')}
-                                                        >
-                                                            {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
-                                                        </select>
-                                                        {idx > 0 && (
-                                                            <button
-                                                                onClick={() => rimuoviIngredienteRicetta(idx)}
-                                                                className="p-3 bg-red-500 text-white rounded hover:bg-red-600 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                                                            >
-                                                                <X />
-                                                            </button>
-                                                        )}
+                                                    <div className="space-y-2">
+                                                        <div>
+                                                            <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Nome ingrediente</label>
+                                                            <input
+                                                                type="text"
+                                                                placeholder="es. Pomodoro"
+                                                                value={ing.nome}
+                                                                onChange={(e) => {
+                                                                    const nuoviIng = [...nuovaRicetta.ingredienti];
+                                                                    nuoviIng[idx].nome = e.target.value;
+                                                                    setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
+                                                                }}
+                                                                className={inputClass('w-full p-3 border rounded text-base')}
+                                                            />
+                                                        </div>
+                                                        <div className="flex gap-2 items-end">
+                                                            <div className="flex-1">
+                                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Quantità</label>
+                                                                <input
+                                                                    type="number"
+                                                                    placeholder="100"
+                                                                    value={ing.quantita}
+                                                                    onChange={(e) => {
+                                                                        const nuoviIng = [...nuovaRicetta.ingredienti];
+                                                                        nuoviIng[idx].quantita = e.target.value;
+                                                                        setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
+                                                                    }}
+                                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                                />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Unità</label>
+                                                                <select
+                                                                    value={ing.unita}
+                                                                    onChange={(e) => {
+                                                                        const nuoviIng = [...nuovaRicetta.ingredienti];
+                                                                        nuoviIng[idx].unita = e.target.value;
+                                                                        setNuovaRicetta({ ...nuovaRicetta, ingredienti: nuoviIng });
+                                                                    }}
+                                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                                >
+                                                                    {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                                                </select>
+                                                            </div>
+                                                            {idx > 0 && (
+                                                                <button
+                                                                    onClick={() => rimuoviIngredienteRicetta(idx)}
+                                                                    className={`p-3 rounded min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors ${
+                                                                        darkMode
+                                                                            ? 'bg-slate-600 hover:bg-red-600 text-white'
+                                                                            : 'bg-slate-200 hover:bg-red-500 hover:text-white text-slate-700'
+                                                                    }`}
+                                                                >
+                                                                    <X />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
                                             ))}
+                                            </div>
                                             <button
                                                 onClick={aggiungiIngredienteRicetta}
-                                                className="text-teal-600 hover:text-teal-700 text-sm sm:text-base py-2 min-h-[44px]"
+                                                className="text-teal-600 hover:text-teal-700 text-sm sm:text-base py-2 min-h-[44px] mt-2"
                                             >
                                                 + Aggiungi ingrediente
                                             </button>
@@ -1376,16 +1400,19 @@
                                             </button>
                                         </div>
 
-                                        <textarea
-                                            placeholder="Istruzioni di preparazione..."
-                                            value={nuovaRicetta.istruzioni}
-                                            onChange={(e) => setNuovaRicetta({ ...nuovaRicetta, istruzioni: e.target.value })}
-                                            className={inputClass('w-full p-3 border rounded mb-3 h-24 text-base')}
-                                        />
+                                        <div className="mb-3">
+                                            <label className={`text-xs font-semibold block mb-1.5 ${textClass}`}>Istruzioni di preparazione</label>
+                                            <textarea
+                                                placeholder="Descrivi i passaggi per preparare la ricetta..."
+                                                value={nuovaRicetta.istruzioni}
+                                                onChange={(e) => setNuovaRicetta({ ...nuovaRicetta, istruzioni: e.target.value })}
+                                                className={inputClass('w-full p-3 border rounded h-24 text-base')}
+                                            />
+                                        </div>
 
                                         <div className="grid grid-cols-2 gap-2 mb-3">
                                             <div>
-                                                <label className={`text-xs block mb-1 ${textSecondary}`}>Grammi totali piatto finito</label>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Grammi totali piatto finito</label>
                                                 <input
                                                     type="number"
                                                     placeholder="es. 400"
@@ -1395,7 +1422,7 @@
                                                 />
                                             </div>
                                             <div>
-                                                <label className={`text-xs block mb-1 ${textSecondary}`}>Grammi per 1 porzione</label>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Grammi per 1 porzione</label>
                                                 <input
                                                     type="number"
                                                     placeholder="es. 200"
@@ -1411,46 +1438,58 @@
                                         </div>
 
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
-                                            <input
-                                                type="number"
-                                                placeholder="Calorie"
-                                                value={nuovaRicetta.macro.calorie}
-                                                onChange={(e) => setNuovaRicetta({
-                                                    ...nuovaRicetta,
-                                                    macro: { ...nuovaRicetta.macro, calorie: e.target.value }
-                                                })}
-                                                className={inputClass('p-3 border rounded text-base')}
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder="Proteine (g)"
-                                                value={nuovaRicetta.macro.proteine}
-                                                onChange={(e) => setNuovaRicetta({
-                                                    ...nuovaRicetta,
-                                                    macro: { ...nuovaRicetta.macro, proteine: e.target.value }
-                                                })}
-                                                className={inputClass('p-3 border rounded text-base')}
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder="Carbo (g)"
-                                                value={nuovaRicetta.macro.carboidrati}
-                                                onChange={(e) => setNuovaRicetta({
-                                                    ...nuovaRicetta,
-                                                    macro: { ...nuovaRicetta.macro, carboidrati: e.target.value }
-                                                })}
-                                                className={inputClass('p-3 border rounded text-base')}
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder="Grassi (g)"
-                                                value={nuovaRicetta.macro.grassi}
-                                                onChange={(e) => setNuovaRicetta({
-                                                    ...nuovaRicetta,
-                                                    macro: { ...nuovaRicetta.macro, grassi: e.target.value }
-                                                })}
-                                                className={inputClass('p-3 border rounded text-base')}
-                                            />
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Calorie</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="es. 150"
+                                                    value={nuovaRicetta.macro.calorie}
+                                                    onChange={(e) => setNuovaRicetta({
+                                                        ...nuovaRicetta,
+                                                        macro: { ...nuovaRicetta.macro, calorie: e.target.value }
+                                                    })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Proteine (g)</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="es. 12"
+                                                    value={nuovaRicetta.macro.proteine}
+                                                    onChange={(e) => setNuovaRicetta({
+                                                        ...nuovaRicetta,
+                                                        macro: { ...nuovaRicetta.macro, proteine: e.target.value }
+                                                    })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Carboidrati (g)</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="es. 20"
+                                                    value={nuovaRicetta.macro.carboidrati}
+                                                    onChange={(e) => setNuovaRicetta({
+                                                        ...nuovaRicetta,
+                                                        macro: { ...nuovaRicetta.macro, carboidrati: e.target.value }
+                                                    })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Grassi (g)</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="es. 5"
+                                                    value={nuovaRicetta.macro.grassi}
+                                                    onChange={(e) => setNuovaRicetta({
+                                                        ...nuovaRicetta,
+                                                        macro: { ...nuovaRicetta.macro, grassi: e.target.value }
+                                                    })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                />
+                                            </div>
                                         </div>
 
                                         <div className="flex gap-2 mb-3">
@@ -1513,7 +1552,11 @@
                                                         </button>
                                                         <button
                                                             onClick={() => eliminaRicetta(ricetta.id)}
-                                                            className="text-red-600 hover:text-red-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                                                            className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors ${
+                                                                darkMode
+                                                                    ? 'text-slate-400 hover:text-red-400 hover:bg-red-900/20'
+                                                                    : 'text-slate-500 hover:text-red-600 hover:bg-red-50'
+                                                            }`}
                                                         >
                                                             <Trash2 />
                                                         </button>
@@ -1613,7 +1656,11 @@
                                     </div>
 
                                     {!formCollapsed.ingredienti && (
-                                        <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 ${bgAccent}`}>
+                                        <div className={`p-4 sm:p-6 rounded-xl mb-6 transition-all border ${
+                                            darkMode
+                                                ? 'bg-slate-800 border-slate-700'
+                                                : 'bg-slate-50 border-slate-200'
+                                        }`}>
                                             <div className="flex justify-between items-center mb-3">
                                                 <h3 className={`font-semibold text-sm sm:text-base ${textClass}`}>
                                                     {editingIngredienteId ? 'Modifica Ingrediente' : 'Aggiungi Ingrediente'}
@@ -1631,7 +1678,7 @@
                                         {/* Nome e Categoria */}
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                                             <div>
-                                                <label className={`text-xs block mb-1 ${textSecondary}`}>Nome ingrediente *</label>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Nome ingrediente *</label>
                                                 <input
                                                     type="text"
                                                     placeholder="es. Gallette di Riso"
@@ -1641,7 +1688,7 @@
                                                 />
                                             </div>
                                             <div>
-                                                <label className={`text-xs block mb-1 ${textSecondary}`}>Categoria</label>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Categoria</label>
                                                 <select
                                                     value={nuovoIngredienteDB.categoria}
                                                     onChange={(e) => setNuovoIngredienteDB({ ...nuovoIngredienteDB, categoria: e.target.value })}
@@ -1654,7 +1701,7 @@
 
                                         {/* Unità Principale */}
                                         <div className="mb-3">
-                                            <label className={`text-xs block mb-1 ${textSecondary}`}>Unità di misura principale *</label>
+                                            <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Unità di misura principale *</label>
                                             <select
                                                 value={nuovoIngredienteDB.unitaPrincipale}
                                                 onChange={(e) => setNuovoIngredienteDB({
@@ -1674,46 +1721,58 @@
 
                                         {/* Macro */}
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
-                                            <input
-                                                type="number"
-                                                placeholder="Calorie"
-                                                value={nuovoIngredienteDB.macro.calorie}
-                                                onChange={(e) => setNuovoIngredienteDB({
-                                                    ...nuovoIngredienteDB,
-                                                    macro: { ...nuovoIngredienteDB.macro, calorie: e.target.value }
-                                                })}
-                                                className={inputClass('p-3 border rounded text-base')}
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder="Proteine (g)"
-                                                value={nuovoIngredienteDB.macro.proteine}
-                                                onChange={(e) => setNuovoIngredienteDB({
-                                                    ...nuovoIngredienteDB,
-                                                    macro: { ...nuovoIngredienteDB.macro, proteine: e.target.value }
-                                                })}
-                                                className={inputClass('p-3 border rounded text-base')}
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder="Carbo (g)"
-                                                value={nuovoIngredienteDB.macro.carboidrati}
-                                                onChange={(e) => setNuovoIngredienteDB({
-                                                    ...nuovoIngredienteDB,
-                                                    macro: { ...nuovoIngredienteDB.macro, carboidrati: e.target.value }
-                                                })}
-                                                className={inputClass('p-3 border rounded text-base')}
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder="Grassi (g)"
-                                                value={nuovoIngredienteDB.macro.grassi}
-                                                onChange={(e) => setNuovoIngredienteDB({
-                                                    ...nuovoIngredienteDB,
-                                                    macro: { ...nuovoIngredienteDB.macro, grassi: e.target.value }
-                                                })}
-                                                className={inputClass('p-3 border rounded text-base')}
-                                            />
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Calorie</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="es. 150"
+                                                    value={nuovoIngredienteDB.macro.calorie}
+                                                    onChange={(e) => setNuovoIngredienteDB({
+                                                        ...nuovoIngredienteDB,
+                                                        macro: { ...nuovoIngredienteDB.macro, calorie: e.target.value }
+                                                    })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Proteine (g)</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="es. 12"
+                                                    value={nuovoIngredienteDB.macro.proteine}
+                                                    onChange={(e) => setNuovoIngredienteDB({
+                                                        ...nuovoIngredienteDB,
+                                                        macro: { ...nuovoIngredienteDB.macro, proteine: e.target.value }
+                                                    })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Carboidrati (g)</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="es. 20"
+                                                    value={nuovoIngredienteDB.macro.carboidrati}
+                                                    onChange={(e) => setNuovoIngredienteDB({
+                                                        ...nuovoIngredienteDB,
+                                                        macro: { ...nuovoIngredienteDB.macro, carboidrati: e.target.value }
+                                                    })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Grassi (g)</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="es. 5"
+                                                    value={nuovoIngredienteDB.macro.grassi}
+                                                    onChange={(e) => setNuovoIngredienteDB({
+                                                        ...nuovoIngredienteDB,
+                                                        macro: { ...nuovoIngredienteDB.macro, grassi: e.target.value }
+                                                    })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                />
+                                            </div>
                                         </div>
 
                                         {/* Conversioni Unità */}
@@ -1907,7 +1966,11 @@
                                                             </button>
                                                             <button
                                                                 onClick={() => eliminaIngredienteDB(ing.id)}
-                                                                className="text-red-600 hover:text-red-700 p-2 min-w-[40px] min-h-[40px] flex items-center justify-center"
+                                                                className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors ${
+                                                                    darkMode
+                                                                        ? 'text-slate-400 hover:text-red-400 hover:bg-red-900/20'
+                                                                        : 'text-slate-500 hover:text-red-600 hover:bg-red-50'
+                                                                }`}
                                                                 title="Elimina"
                                                             >
                                                                 <Trash2 />
@@ -1994,51 +2057,67 @@
                                     </div>
 
                                     {!formCollapsed.inventario && (
-                                        <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 flex flex-col gap-2 ${bgAccent}`}>
-                                        <select
-                                            value=""
-                                            onChange={(e) => {
-                                                if (e.target.value) {
-                                                    const ingDB = ingredientiDB.find(i => i.id === parseInt(e.target.value));
-                                                    if (ingDB) {
-                                                        setNuovoItem({
-                                                            nome: ingDB.nome,
-                                                            quantita: '100',
-                                                            unita: ingDB.unitaDefault
-                                                        });
-                                                    }
-                                                }
-                                            }}
-                                            className={inputClass('w-full p-3 border rounded text-base')}
-                                        >
-                                            <option value="">🔍 Cerca nel database o inserisci sotto</option>
-                                            {ingredientiDB.map(ingDB => (
-                                                <option key={ingDB.id} value={ingDB.id}>{ingDB.nome}</option>
-                                            ))}
-                                        </select>
-                                        <input
-                                            type="text"
-                                            placeholder="Nome ingrediente"
-                                            value={nuovoItem.nome}
-                                            onChange={(e) => setNuovoItem({ ...nuovoItem, nome: e.target.value })}
-                                            className={inputClass('w-full p-3 border rounded text-base')}
-                                        />
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="number"
-                                                placeholder="Quantità"
-                                                value={nuovoItem.quantita}
-                                                onChange={(e) => setNuovoItem({ ...nuovoItem, quantita: e.target.value })}
-                                                className={inputClass('flex-1 p-3 border rounded text-base')}
-                                            />
-                                            <select
-                                                value={nuovoItem.unita}
-                                                onChange={(e) => setNuovoItem({ ...nuovoItem, unita: e.target.value })}
-                                                className={inputClass('flex-1 p-3 border rounded text-base')}
-                                            >
-                                                {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
-                                            </select>
-                                        </div>
+                                        <div className={`p-4 sm:p-6 rounded-xl mb-6 transition-all border ${
+                                            darkMode
+                                                ? 'bg-slate-800 border-slate-700'
+                                                : 'bg-slate-50 border-slate-200'
+                                        }`}>
+                                            <div className="mb-3">
+                                                <label className={`text-xs font-semibold block mb-1.5 ${textClass}`}>Cerca ingrediente</label>
+                                                <select
+                                                    value=""
+                                                    onChange={(e) => {
+                                                        if (e.target.value) {
+                                                            const ingDB = ingredientiDB.find(i => i.id === parseInt(e.target.value));
+                                                            if (ingDB) {
+                                                                setNuovoItem({
+                                                                    nome: ingDB.nome,
+                                                                    quantita: '100',
+                                                                    unita: ingDB.unitaDefault
+                                                                });
+                                                            }
+                                                        }
+                                                    }}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                >
+                                                    <option value="">🔍 Cerca nel database o inserisci manualmente sotto</option>
+                                                    {ingredientiDB.map(ingDB => (
+                                                        <option key={ingDB.id} value={ingDB.id}>{ingDB.nome}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="mb-3">
+                                                <label className={`text-xs font-semibold block mb-1.5 ${textClass}`}>Nome ingrediente</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="es. Riso"
+                                                    value={nuovoItem.nome}
+                                                    onChange={(e) => setNuovoItem({ ...nuovoItem, nome: e.target.value })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2 mb-3">
+                                                <div>
+                                                    <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Quantità</label>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="100"
+                                                        value={nuovoItem.quantita}
+                                                        onChange={(e) => setNuovoItem({ ...nuovoItem, quantita: e.target.value })}
+                                                        className={inputClass('w-full p-3 border rounded text-base')}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Unità</label>
+                                                    <select
+                                                        value={nuovoItem.unita}
+                                                        onChange={(e) => setNuovoItem({ ...nuovoItem, unita: e.target.value })}
+                                                        className={inputClass('w-full p-3 border rounded text-base')}
+                                                    >
+                                                        {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                                    </select>
+                                                </div>
+                                            </div>
                                             <button
                                                 onClick={aggiungiInventario}
                                                 className="w-full bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition min-h-[44px] font-semibold"
@@ -2096,7 +2175,11 @@
                                                             </button>
                                                             <button
                                                                 onClick={() => eliminaInventario(item.id)}
-                                                                className="text-red-600 hover:text-red-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                                                                className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors ${
+                                                                    darkMode
+                                                                        ? 'text-slate-400 hover:text-red-400 hover:bg-red-900/20'
+                                                                        : 'text-slate-500 hover:text-red-600 hover:bg-red-50'
+                                                                }`}
                                                             >
                                                                 <Trash2 />
                                                             </button>
@@ -2126,52 +2209,68 @@
                                     </div>
 
                                     {!formCollapsed.spesa && (
-                                        <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 flex flex-col gap-2 ${bgAccent}`}>
-                                        <select
-                                            value=""
-                                            onChange={(e) => {
-                                                if (e.target.value) {
-                                                    const ingDB = ingredientiDB.find(i => i.id === parseInt(e.target.value));
-                                                    if (ingDB) {
-                                                        setNuovoSpesa({
-                                                            nome: ingDB.nome,
-                                                            quantita: '100',
-                                                            unita: ingDB.unitaDefault,
-                                                            comprato: false
-                                                        });
-                                                    }
-                                                }
-                                            }}
-                                            className={inputClass('w-full p-3 border rounded text-base')}
-                                        >
-                                            <option value="">🔍 Cerca nel database o inserisci sotto</option>
-                                            {ingredientiDB.map(ingDB => (
-                                                <option key={ingDB.id} value={ingDB.id}>{ingDB.nome}</option>
-                                            ))}
-                                        </select>
-                                        <input
-                                            type="text"
-                                            placeholder="Cosa comprare"
-                                            value={nuovoSpesa.nome}
-                                            onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, nome: e.target.value })}
-                                            className={inputClass('w-full p-3 border rounded text-base')}
-                                        />
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="number"
-                                                placeholder="Quantità"
-                                                value={nuovoSpesa.quantita}
-                                                onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, quantita: e.target.value })}
-                                                className={inputClass('flex-1 p-3 border rounded text-base')}
-                                            />
-                                            <select
-                                                value={nuovoSpesa.unita}
-                                                onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, unita: e.target.value })}
-                                                className={inputClass('flex-1 p-3 border rounded text-base')}
-                                            >
-                                                {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
-                                            </select>
-                                        </div>
+                                        <div className={`p-4 sm:p-6 rounded-xl mb-6 transition-all border ${
+                                            darkMode
+                                                ? 'bg-slate-800 border-slate-700'
+                                                : 'bg-slate-50 border-slate-200'
+                                        }`}>
+                                            <div className="mb-3">
+                                                <label className={`text-xs font-semibold block mb-1.5 ${textClass}`}>Cerca ingrediente</label>
+                                                <select
+                                                    value=""
+                                                    onChange={(e) => {
+                                                        if (e.target.value) {
+                                                            const ingDB = ingredientiDB.find(i => i.id === parseInt(e.target.value));
+                                                            if (ingDB) {
+                                                                setNuovoSpesa({
+                                                                    nome: ingDB.nome,
+                                                                    quantita: '100',
+                                                                    unita: ingDB.unitaDefault,
+                                                                    comprato: false
+                                                                });
+                                                            }
+                                                        }
+                                                    }}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                >
+                                                    <option value="">🔍 Cerca nel database o inserisci manualmente sotto</option>
+                                                    {ingredientiDB.map(ingDB => (
+                                                        <option key={ingDB.id} value={ingDB.id}>{ingDB.nome}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="mb-3">
+                                                <label className={`text-xs font-semibold block mb-1.5 ${textClass}`}>Cosa comprare</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="es. Pomodori"
+                                                    value={nuovoSpesa.nome}
+                                                    onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, nome: e.target.value })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2 mb-3">
+                                                <div>
+                                                    <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Quantità</label>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="100"
+                                                        value={nuovoSpesa.quantita}
+                                                        onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, quantita: e.target.value })}
+                                                        className={inputClass('w-full p-3 border rounded text-base')}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Unità</label>
+                                                    <select
+                                                        value={nuovoSpesa.unita}
+                                                        onChange={(e) => setNuovoSpesa({ ...nuovoSpesa, unita: e.target.value })}
+                                                        className={inputClass('w-full p-3 border rounded text-base')}
+                                                    >
+                                                        {unitaMisura.map(u => <option key={u} value={u}>{u}</option>)}
+                                                    </select>
+                                                </div>
+                                            </div>
                                             <button
                                                 onClick={aggiungiSpesa}
                                                 className="w-full bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition min-h-[44px] font-semibold"
@@ -2207,7 +2306,11 @@
                                                 </div>
                                                 <button
                                                     onClick={() => eliminaSpesa(item.id)}
-                                                    className="text-red-600 hover:text-red-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0"
+                                                    className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors flex-shrink-0 ${
+                                                        darkMode
+                                                            ? 'text-slate-400 hover:text-red-400 hover:bg-red-900/20'
+                                                            : 'text-slate-500 hover:text-red-600 hover:bg-red-50'
+                                                    }`}
                                                 >
                                                     <Trash2 />
                                                 </button>
@@ -2234,29 +2337,39 @@
                                     </div>
 
                                     {!formCollapsed.tracking && (
-                                        <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 ${bgAccent}`}>
+                                        <div className={`p-4 sm:p-6 rounded-xl mb-6 transition-all border ${
+                                            darkMode
+                                                ? 'bg-slate-800 border-slate-700'
+                                                : 'bg-slate-50 border-slate-200'
+                                        }`}>
                                             <h3 className={`font-semibold mb-3 text-sm sm:text-base ${textClass}`}>Registra Pasto</h3>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
-                                            <input
-                                                type="date"
-                                                value={nuovoPasto.data}
-                                                onChange={(e) => setNuovoPasto({ ...nuovoPasto, data: e.target.value })}
-                                                className={inputClass('p-3 border rounded text-base')}
-                                            />
-                                            <select
-                                                value={nuovoPasto.tipoPasto}
-                                                onChange={(e) => setNuovoPasto({ ...nuovoPasto, tipoPasto: e.target.value })}
-                                                className={inputClass('p-3 border rounded text-base font-semibold')}
-                                            >
-                                                {tipiPasto.map(tipo => (
-                                                    <option key={tipo} value={tipo}>{tipo}</option>
-                                                ))}
-                                            </select>
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Data</label>
+                                                <input
+                                                    type="date"
+                                                    value={nuovoPasto.data}
+                                                    onChange={(e) => setNuovoPasto({ ...nuovoPasto, data: e.target.value })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Tipo Pasto</label>
+                                                <select
+                                                    value={nuovoPasto.tipoPasto}
+                                                    onChange={(e) => setNuovoPasto({ ...nuovoPasto, tipoPasto: e.target.value })}
+                                                    className={inputClass('w-full p-3 border rounded text-base font-semibold')}
+                                                >
+                                                    {tipiPasto.map(tipo => (
+                                                        <option key={tipo} value={tipo}>{tipo}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
                                         </div>
 
                                         <div className="mb-3">
-                                            <label className={`text-xs block mb-1 ${textSecondary}`}>🔍 Cerca ricetta o ingrediente dal database</label>
+                                            <label className={`text-xs font-semibold block mb-1.5 ${textClass}`}>🔍 Cerca ricetta o ingrediente dal database</label>
                                             <select
                                                 value={nuovoPasto.ricettaId || ''}
                                                 onChange={(e) => selezionaRicettaTracking(e.target.value)}
@@ -2281,22 +2394,26 @@
                                                     </option>
                                                 ))}
                                             </select>
-                                            <p className={`text-xs mt-1 ${textSecondary}`}>Oppure inserisci manualmente qui sotto ↓</p>
+                                            <p className={`text-xs mt-1.5 ${textSecondary}`}>Oppure inserisci manualmente qui sotto ↓</p>
                                         </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
+                                        <div className="mb-3">
+                                            <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Nome alimento</label>
                                             <input
                                                 type="text"
-                                                placeholder="Nome alimento"
+                                                placeholder="es. Riso"
                                                 value={nuovoPasto.nome}
                                                 onChange={(e) => setNuovoPasto({ ...nuovoPasto, nome: e.target.value, ingredienteDBId: null, unitaDisponibili: [] })}
-                                                className={inputClass('p-3 border rounded text-base')}
+                                                className={inputClass('w-full p-3 border rounded text-base')}
                                                 disabled={nuovoPasto.isRicetta || nuovoPasto.ingredienteDBId}
                                             />
-                                            <div className="flex gap-2">
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2 mb-3">
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Quantità</label>
                                                 <input
                                                     type="number"
-                                                    placeholder="Quantità"
+                                                    placeholder="100"
                                                     value={nuovoPasto.quantita}
                                                     onChange={(e) => {
                                                         if (nuovoPasto.isRicetta) {
@@ -2307,8 +2424,11 @@
                                                             setNuovoPasto({ ...nuovoPasto, quantita: e.target.value });
                                                         }
                                                     }}
-                                                    className={inputClass('flex-1 p-3 border rounded text-base')}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
                                                 />
+                                            </div>
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Unità</label>
                                                 <select
                                                     value={nuovoPasto.unita}
                                                     onChange={(e) => {
@@ -2318,7 +2438,7 @@
                                                             setNuovoPasto({ ...nuovoPasto, unita: e.target.value });
                                                         }
                                                     }}
-                                                    className={inputClass('p-3 border rounded text-base')}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
                                                     disabled={nuovoPasto.isRicetta}
                                                 >
                                                     {nuovoPasto.ingredienteDBId && nuovoPasto.unitaDisponibili.length > 0 ? (
@@ -2365,50 +2485,62 @@
                                         )}
 
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
-                                            <input
-                                                type="number"
-                                                placeholder="Calorie"
-                                                value={nuovoPasto.macro.calorie}
-                                                onChange={(e) => setNuovoPasto({
-                                                    ...nuovoPasto,
-                                                    macro: { ...nuovoPasto.macro, calorie: e.target.value }
-                                                })}
-                                                className={inputClass('p-3 border rounded text-base')}
-                                                disabled={nuovoPasto.ingredienteDBId || nuovoPasto.isRicetta}
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder="Proteine (g)"
-                                                value={nuovoPasto.macro.proteine}
-                                                onChange={(e) => setNuovoPasto({
-                                                    ...nuovoPasto,
-                                                    macro: { ...nuovoPasto.macro, proteine: e.target.value }
-                                                })}
-                                                className={inputClass('p-3 border rounded text-base')}
-                                                disabled={nuovoPasto.ingredienteDBId || nuovoPasto.isRicetta}
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder="Carbo (g)"
-                                                value={nuovoPasto.macro.carboidrati}
-                                                onChange={(e) => setNuovoPasto({
-                                                    ...nuovoPasto,
-                                                    macro: { ...nuovoPasto.macro, carboidrati: e.target.value }
-                                                })}
-                                                className={inputClass('p-3 border rounded text-base')}
-                                                disabled={nuovoPasto.ingredienteDBId || nuovoPasto.isRicetta}
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder="Grassi (g)"
-                                                value={nuovoPasto.macro.grassi}
-                                                onChange={(e) => setNuovoPasto({
-                                                    ...nuovoPasto,
-                                                    macro: { ...nuovoPasto.macro, grassi: e.target.value }
-                                                })}
-                                                className={inputClass('p-3 border rounded text-base')}
-                                                disabled={nuovoPasto.ingredienteDBId || nuovoPasto.isRicetta}
-                                            />
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Calorie</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="es. 150"
+                                                    value={nuovoPasto.macro.calorie}
+                                                    onChange={(e) => setNuovoPasto({
+                                                        ...nuovoPasto,
+                                                        macro: { ...nuovoPasto.macro, calorie: e.target.value }
+                                                    })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                    disabled={nuovoPasto.ingredienteDBId || nuovoPasto.isRicetta}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Proteine (g)</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="es. 12"
+                                                    value={nuovoPasto.macro.proteine}
+                                                    onChange={(e) => setNuovoPasto({
+                                                        ...nuovoPasto,
+                                                        macro: { ...nuovoPasto.macro, proteine: e.target.value }
+                                                    })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                    disabled={nuovoPasto.ingredienteDBId || nuovoPasto.isRicetta}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Carboidrati (g)</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="es. 20"
+                                                    value={nuovoPasto.macro.carboidrati}
+                                                    onChange={(e) => setNuovoPasto({
+                                                        ...nuovoPasto,
+                                                        macro: { ...nuovoPasto.macro, carboidrati: e.target.value }
+                                                    })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                    disabled={nuovoPasto.ingredienteDBId || nuovoPasto.isRicetta}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className={`text-xs font-semibold block mb-1 ${textClass}`}>Grassi (g)</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="es. 5"
+                                                    value={nuovoPasto.macro.grassi}
+                                                    onChange={(e) => setNuovoPasto({
+                                                        ...nuovoPasto,
+                                                        macro: { ...nuovoPasto.macro, grassi: e.target.value }
+                                                    })}
+                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                    disabled={nuovoPasto.ingredienteDBId || nuovoPasto.isRicetta}
+                                                />
+                                            </div>
                                         </div>
 
                                             <button
@@ -2584,7 +2716,11 @@
                                                                                                 </div>
                                                                                                 <button
                                                                                                     onClick={() => eliminaPasto(pasto.id)}
-                                                                                                    className="text-red-600 hover:text-red-700 p-1 min-w-[36px] min-h-[36px] flex items-center justify-center flex-shrink-0"
+                                                                                                    className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors flex-shrink-0 ${
+                                                                                                        darkMode
+                                                                                                            ? 'text-slate-400 hover:text-red-400 hover:bg-red-900/20'
+                                                                                                            : 'text-slate-500 hover:text-red-600 hover:bg-red-50'
+                                                                                                    }`}
                                                                                                 >
                                                                                                     <Trash2 />
                                                                                                 </button>
