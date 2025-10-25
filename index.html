@@ -1244,6 +1244,18 @@
                 const [localSelected, setLocalSelected] = useState(new Set(selectModalConfig.selectedItems));
                 const [activeView, setActiveView] = useState('all'); // 'all' | 'recent'
 
+                // Lock body scroll when modal is open
+                useEffect(() => {
+                    if (selectModalOpen) {
+                        document.body.style.overflow = 'hidden';
+                    } else {
+                        document.body.style.overflow = '';
+                    }
+                    return () => {
+                        document.body.style.overflow = '';
+                    };
+                }, [selectModalOpen]);
+
                 if (!selectModalOpen) return null;
 
                 const { mode, title, selectionMode, onSelect } = selectModalConfig;
@@ -1330,15 +1342,15 @@
 
                 return (
                     <div
-                        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+                        className="fixed inset-0 z-50"
                         onClick={() => setSelectModalOpen(false)}
                     >
                         {/* Overlay */}
                         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
 
-                        {/* Modal */}
+                        {/* Modal - Fixed Bottom on Mobile, Centered on Desktop */}
                         <div
-                            className={`relative w-full sm:w-[600px] sm:max-w-[90vw] max-h-[85vh] sm:max-h-[80vh] rounded-t-3xl sm:rounded-2xl overflow-hidden animate-slide-up ${
+                            className={`fixed bottom-0 left-0 right-0 sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 w-full sm:w-[600px] sm:max-w-[90vw] max-h-[85vh] sm:max-h-[80vh] rounded-t-3xl sm:rounded-2xl overflow-hidden animate-slide-up ${
                                 darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white'
                             } shadow-2xl flex flex-col`}
                             onClick={(e) => e.stopPropagation()}
@@ -1784,12 +1796,40 @@
                                                 </div>
                                             ))}
                                             </div>
-                                            <button
-                                                onClick={aggiungiIngredienteRicetta}
-                                                className="text-teal-600 hover:text-teal-700 text-sm sm:text-base py-2 min-h-[44px] mt-2"
-                                            >
-                                                + Aggiungi ingrediente
-                                            </button>
+                                            <div className="flex gap-2 mt-2">
+                                                <button
+                                                    onClick={aggiungiIngredienteRicetta}
+                                                    className="flex-1 text-teal-600 hover:text-teal-700 text-sm sm:text-base py-2 min-h-[44px] font-medium"
+                                                >
+                                                    + Aggiungi Uno
+                                                </button>
+                                                <button
+                                                    onClick={() => openSelectModal({
+                                                        title: 'Seleziona Ingredienti',
+                                                        mode: 'ingredients',
+                                                        selectionMode: 'multiple',
+                                                        onSelect: (items) => {
+                                                            const nuoviIng = items.map(item => ({
+                                                                nome: item.nome,
+                                                                quantita: '100',
+                                                                unita: item.unitaDefault || 'g'
+                                                            }));
+                                                            setNuovaRicetta({
+                                                                ...nuovaRicetta,
+                                                                ingredienti: [...nuovaRicetta.ingredienti, ...nuoviIng]
+                                                            });
+                                                        }
+                                                    })}
+                                                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm sm:text-base min-h-[44px] font-medium transition-colors ${
+                                                        darkMode
+                                                            ? 'bg-teal-600 hover:bg-teal-700 text-white'
+                                                            : 'bg-teal-500 hover:bg-teal-600 text-white'
+                                                    }`}
+                                                >
+                                                    <Plus />
+                                                    Aggiungi Multipli
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <div className="flex gap-2 mb-3">
