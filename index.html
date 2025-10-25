@@ -893,7 +893,8 @@
                     versione: '2.0',
                     dataEsportazione: new Date().toISOString()
                 };
-                const jsonString = JSON.stringify(dati, null, 2);
+                // JSON compresso (senza formattazione) per ridurre dimensione su mobile
+                const jsonString = JSON.stringify(dati);
 
                 navigator.clipboard.writeText(jsonString)
                     .then(() => {
