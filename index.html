@@ -103,6 +103,12 @@
             border-color: var(--glass-border-dark);
         }
 
+        /* Dark Mode Body */
+        .dark body {
+            background: var(--color-bg-dark);
+            color: var(--color-text-dark);
+        }
+
         /* Floating Label Input */
         .floating-input-group {
             position: relative;
@@ -1139,7 +1145,7 @@
             return (
                 <div className={`min-h-screen transition-colors duration-300 p-2 sm:p-4 ${
                     darkMode
-                        ? 'bg-gradient-to-br from-slate-900 to-slate-800'
+                        ? 'dark bg-gradient-to-br from-slate-900 to-slate-800'
                         : 'bg-gradient-to-br from-slate-50 to-slate-100'
                 }`}>
                     <div className="max-w-6xl mx-auto">
@@ -1211,26 +1217,29 @@
                                     <button
                                         key={tab.key}
                                         onClick={() => setActiveTab(tab.key)}
-                                        className={`px-3 sm:px-6 py-3 font-semibold whitespace-nowrap flex-shrink-0 min-h-[44px] transition-all snap-center flex flex-col sm:flex-row items-center gap-1 sm:gap-2 ${
+                                        className={`px-4 sm:px-6 py-3 font-medium whitespace-nowrap flex-shrink-0 min-h-[44px] transition-all snap-center flex flex-col sm:flex-row items-center gap-1 sm:gap-2 relative ${
                                             activeTab === tab.key
                                                 ? darkMode
-                                                    ? 'border-b-3 border-teal-400 text-teal-400 bg-gray-700'
-                                                    : 'border-b-3 border-slate-500 text-teal-600 bg-slate-50'
+                                                    ? 'text-teal-400'
+                                                    : 'text-teal-600'
                                                 : darkMode
-                                                    ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
-                                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                                                    ? 'text-slate-400 hover:text-slate-200'
+                                                    : 'text-slate-500 hover:text-slate-700'
                                         }`}
                                     >
                                         <span className="text-lg sm:text-base">{tab.icon}</span>
-                                        <span className="text-xs sm:text-base">{tab.label}</span>
+                                        <span className="text-xs sm:text-sm font-semibold">{tab.label}</span>
+                                        {activeTab === tab.key && (
+                                            <div className={`absolute bottom-0 left-0 right-0 h-0.5 rounded-full ${
+                                                darkMode ? 'bg-teal-400' : 'bg-teal-600'
+                                            }`} />
+                                        )}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        <div className={`rounded-lg shadow-lg p-3 sm:p-6 transition-colors duration-300 ${
-                            darkMode ? 'bg-gray-800' : 'bg-white'
-                        }`}>
+                        <div className="glass-card p-3 sm:p-6 transition-colors duration-300">
                             {activeTab === 'ricette' && (
                                 <div>
                                     <div className="flex justify-between items-center mb-3 sm:mb-4">
@@ -1239,7 +1248,7 @@
                                         }`}>Le Mie Ricette</h2>
                                         <button
                                             onClick={() => setFormCollapsed({ ...formCollapsed, ricette: !formCollapsed.ricette })}
-                                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition text-sm sm:text-base font-semibold min-h-[44px] ${
+                                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full transition-all text-sm sm:text-base font-semibold min-h-[44px] hover:shadow-md ${
                                                 darkMode
                                                     ? 'bg-teal-600 hover:bg-teal-700 text-white'
                                                     : 'bg-slate-500 hover:bg-teal-600 text-white'
@@ -1593,7 +1602,7 @@
                                         <h2 className={`text-xl sm:text-2xl font-bold ${textClass}`}>🥕 Database Ingredienti</h2>
                                         <button
                                             onClick={() => setFormCollapsed({ ...formCollapsed, ingredienti: !formCollapsed.ingredienti })}
-                                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition text-sm sm:text-base font-semibold min-h-[44px] ${
+                                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full transition-all text-sm sm:text-base font-semibold min-h-[44px] hover:shadow-md ${
                                                 darkMode
                                                     ? 'bg-teal-600 hover:bg-teal-700 text-white'
                                                     : 'bg-teal-500 hover:bg-teal-600 text-white'
@@ -1974,7 +1983,7 @@
                                         <h2 className={`text-xl sm:text-2xl font-bold ${textClass}`}>Inventario Ingredienti</h2>
                                         <button
                                             onClick={() => setFormCollapsed({ ...formCollapsed, inventario: !formCollapsed.inventario })}
-                                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition text-sm sm:text-base font-semibold min-h-[44px] ${
+                                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full transition-all text-sm sm:text-base font-semibold min-h-[44px] hover:shadow-md ${
                                                 darkMode
                                                     ? 'bg-blue-600 hover:bg-blue-700 text-white'
                                                     : 'bg-blue-500 hover:bg-blue-600 text-white'
@@ -2106,7 +2115,7 @@
                                         <h2 className={`text-xl sm:text-2xl font-bold ${textClass}`}>Lista della Spesa</h2>
                                         <button
                                             onClick={() => setFormCollapsed({ ...formCollapsed, spesa: !formCollapsed.spesa })}
-                                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition text-sm sm:text-base font-semibold min-h-[44px] ${
+                                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full transition-all text-sm sm:text-base font-semibold min-h-[44px] hover:shadow-md ${
                                                 darkMode
                                                     ? 'bg-green-600 hover:bg-green-700 text-white'
                                                     : 'bg-green-500 hover:bg-green-600 text-white'
@@ -2214,7 +2223,7 @@
                                         <h2 className={`text-xl sm:text-2xl font-bold ${textClass}`}>Tracking Pasti</h2>
                                         <button
                                             onClick={() => setFormCollapsed({ ...formCollapsed, tracking: !formCollapsed.tracking })}
-                                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition text-sm sm:text-base font-semibold min-h-[44px] ${
+                                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full transition-all text-sm sm:text-base font-semibold min-h-[44px] hover:shadow-md ${
                                                 darkMode
                                                     ? 'bg-purple-600 hover:bg-purple-700 text-white'
                                                     : 'bg-purple-500 hover:bg-purple-600 text-white'
