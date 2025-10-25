@@ -2507,27 +2507,29 @@
                                         }`}>
                                             <div className="mb-3">
                                                 <label className={`text-xs font-semibold block mb-1.5 ${textClass}`}>Cerca ingrediente</label>
-                                                <select
-                                                    value=""
-                                                    onChange={(e) => {
-                                                        if (e.target.value) {
-                                                            const ingDB = ingredientiDB.find(i => i.id === parseInt(e.target.value));
-                                                            if (ingDB) {
-                                                                setNuovoItem({
-                                                                    nome: ingDB.nome,
-                                                                    quantita: '100',
-                                                                    unita: ingDB.unitaDefault
-                                                                });
-                                                            }
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openSelectModal({
+                                                        title: 'Seleziona Ingrediente',
+                                                        mode: 'ingredients',
+                                                        selectionMode: 'single',
+                                                        onSelect: (item) => {
+                                                            setNuovoItem({
+                                                                nome: item.nome,
+                                                                quantita: '100',
+                                                                unita: item.unitaDefault || 'g'
+                                                            });
                                                         }
-                                                    }}
-                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                    })}
+                                                    className={`w-full p-3 border rounded-lg text-left flex items-center gap-2 transition-colors ${
+                                                        darkMode
+                                                            ? 'bg-slate-700 border-slate-600 hover:border-teal-500 text-slate-300'
+                                                            : 'bg-white border-slate-300 hover:border-teal-500 text-slate-700'
+                                                    }`}
                                                 >
-                                                    <option value="">🔍 Cerca nel database o inserisci manualmente sotto</option>
-                                                    {ingredientiDB.map(ingDB => (
-                                                        <option key={ingDB.id} value={ingDB.id}>{ingDB.nome}</option>
-                                                    ))}
-                                                </select>
+                                                    <Search />
+                                                    <span className="flex-1">🔍 Cerca ingrediente nel database</span>
+                                                </button>
                                             </div>
                                             <div className="mb-3">
                                                 <label className={`text-xs font-semibold block mb-1.5 ${textClass}`}>Nome ingrediente</label>
@@ -2659,28 +2661,30 @@
                                         }`}>
                                             <div className="mb-3">
                                                 <label className={`text-xs font-semibold block mb-1.5 ${textClass}`}>Cerca ingrediente</label>
-                                                <select
-                                                    value=""
-                                                    onChange={(e) => {
-                                                        if (e.target.value) {
-                                                            const ingDB = ingredientiDB.find(i => i.id === parseInt(e.target.value));
-                                                            if (ingDB) {
-                                                                setNuovoSpesa({
-                                                                    nome: ingDB.nome,
-                                                                    quantita: '100',
-                                                                    unita: ingDB.unitaDefault,
-                                                                    comprato: false
-                                                                });
-                                                            }
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openSelectModal({
+                                                        title: 'Seleziona Ingrediente',
+                                                        mode: 'ingredients',
+                                                        selectionMode: 'single',
+                                                        onSelect: (item) => {
+                                                            setNuovoSpesa({
+                                                                nome: item.nome,
+                                                                quantita: '100',
+                                                                unita: item.unitaDefault || 'g',
+                                                                comprato: false
+                                                            });
                                                         }
-                                                    }}
-                                                    className={inputClass('w-full p-3 border rounded text-base')}
+                                                    })}
+                                                    className={`w-full p-3 border rounded-lg text-left flex items-center gap-2 transition-colors ${
+                                                        darkMode
+                                                            ? 'bg-slate-700 border-slate-600 hover:border-teal-500 text-slate-300'
+                                                            : 'bg-white border-slate-300 hover:border-teal-500 text-slate-700'
+                                                    }`}
                                                 >
-                                                    <option value="">🔍 Cerca nel database o inserisci manualmente sotto</option>
-                                                    {ingredientiDB.map(ingDB => (
-                                                        <option key={ingDB.id} value={ingDB.id}>{ingDB.nome}</option>
-                                                    ))}
-                                                </select>
+                                                    <Search />
+                                                    <span className="flex-1">🔍 Cerca ingrediente nel database</span>
+                                                </button>
                                             </div>
                                             <div className="mb-3">
                                                 <label className={`text-xs font-semibold block mb-1.5 ${textClass}`}>Cosa comprare</label>
@@ -2813,30 +2817,29 @@
 
                                         <div className="mb-3">
                                             <label className={`text-xs font-semibold block mb-1.5 ${textClass}`}>🔍 Cerca ricetta o ingrediente dal database</label>
-                                            <select
-                                                value={nuovoPasto.ricettaId || ''}
-                                                onChange={(e) => selezionaRicettaTracking(e.target.value)}
-                                                className={inputClass('w-full p-3 border rounded text-base mb-2')}
+                                            <button
+                                                type="button"
+                                                onClick={() => openSelectModal({
+                                                    title: 'Seleziona Ricetta o Ingrediente',
+                                                    mode: 'both',
+                                                    selectionMode: 'single',
+                                                    onSelect: (item) => {
+                                                        if (item.type === 'recipe') {
+                                                            selezionaRicettaTracking(item.id);
+                                                        } else {
+                                                            selezionaIngredienteTracking(item.id);
+                                                        }
+                                                    }
+                                                })}
+                                                className={`w-full p-3 border rounded-lg text-left flex items-center gap-2 transition-colors ${
+                                                    darkMode
+                                                        ? 'bg-slate-700 border-slate-600 hover:border-teal-500 text-slate-300'
+                                                        : 'bg-white border-slate-300 hover:border-teal-500 text-slate-700'
+                                                }`}
                                             >
-                                                <option value="">-- Scegli ricetta completa --</option>
-                                                {ricette.map(ricetta => (
-                                                    <option key={ricetta.id} value={ricetta.id}>
-                                                        📖 {ricetta.nome} {ricetta.grammiPorzione ? `(${ricetta.grammiPorzione}g)` : '(100g)'}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <select
-                                                value=""
-                                                onChange={(e) => selezionaIngredienteTracking(e.target.value)}
-                                                className={inputClass('w-full p-3 border rounded text-base')}
-                                            >
-                                                <option value="">-- Scegli ingrediente singolo --</option>
-                                                {ingredientiDB.map(ingDB => (
-                                                    <option key={ingDB.id} value={ingDB.id}>
-                                                        🥕 {ingDB.nome} ({ingDB.unitaDefault || 'g'})
-                                                    </option>
-                                                ))}
-                                            </select>
+                                                <Search />
+                                                <span className="flex-1">🔍 Cerca ricetta o ingrediente</span>
+                                            </button>
                                             <p className={`text-xs mt-1.5 ${textSecondary}`}>Oppure inserisci manualmente qui sotto ↓</p>
                                         </div>
 
