@@ -1140,7 +1140,7 @@
                 <div className={`min-h-screen transition-colors duration-300 p-2 sm:p-4 ${
                     darkMode
                         ? 'bg-gradient-to-br from-gray-900 to-gray-800'
-                        : 'bg-gradient-to-br from-orange-50 to-red-50'
+                        : 'bg-gradient-to-br from-slate-50 to-red-50'
                 }`}>
                     <div className="max-w-6xl mx-auto">
                         <div className={`rounded-lg shadow-lg p-3 sm:p-6 mb-4 sm:mb-6 transition-colors duration-300 ${
@@ -1149,7 +1149,7 @@
                             <div className="flex flex-col gap-3">
                                 <div className="flex justify-between items-center">
                                     <h1 className={`text-2xl sm:text-3xl font-bold text-center sm:text-left transition-colors ${
-                                        darkMode ? 'text-orange-400' : 'text-orange-600'
+                                        darkMode ? 'text-teal-400' : 'text-teal-600'
                                     }`}>🍳 Gestionale Cucina</h1>
                                     <button
                                         onClick={() => setDarkMode(!darkMode)}
@@ -1208,8 +1208,8 @@
                                         className={`px-3 sm:px-6 py-3 font-semibold whitespace-nowrap flex-shrink-0 min-h-[44px] transition-all snap-center flex flex-col sm:flex-row items-center gap-1 sm:gap-2 ${
                                             activeTab === tab.key
                                                 ? darkMode
-                                                    ? 'border-b-3 border-orange-400 text-orange-400 bg-gray-700'
-                                                    : 'border-b-3 border-orange-500 text-orange-600 bg-orange-50'
+                                                    ? 'border-b-3 border-teal-400 text-teal-400 bg-gray-700'
+                                                    : 'border-b-3 border-slate-500 text-teal-600 bg-slate-50'
                                                 : darkMode
                                                     ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
                                                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
@@ -1235,8 +1235,8 @@
                                             onClick={() => setFormCollapsed({ ...formCollapsed, ricette: !formCollapsed.ricette })}
                                             className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition text-sm sm:text-base font-semibold min-h-[44px] ${
                                                 darkMode
-                                                    ? 'bg-orange-600 hover:bg-orange-700 text-white'
-                                                    : 'bg-orange-500 hover:bg-orange-600 text-white'
+                                                    ? 'bg-teal-600 hover:bg-teal-700 text-white'
+                                                    : 'bg-slate-500 hover:bg-teal-600 text-white'
                                             }`}
                                         >
                                             {formCollapsed.ricette ? '+ Aggiungi' : '− Chiudi'}
@@ -1245,7 +1245,7 @@
 
                                     {!formCollapsed.ricette && (
                                         <div className={`p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 transition-colors ${
-                                            darkMode ? 'bg-gray-700' : 'bg-orange-50'
+                                            darkMode ? 'bg-gray-700' : 'bg-slate-50'
                                         }`}>
                                             <div className="flex justify-between items-center mb-3">
                                                 <h3 className={`font-semibold text-sm sm:text-base ${textClass}`}>
@@ -1344,7 +1344,7 @@
                                             ))}
                                             <button
                                                 onClick={aggiungiIngredienteRicetta}
-                                                className="text-orange-600 hover:text-orange-700 text-sm sm:text-base py-2 min-h-[44px]"
+                                                className="text-teal-600 hover:text-teal-700 text-sm sm:text-base py-2 min-h-[44px]"
                                             >
                                                 + Aggiungi ingrediente
                                             </button>
@@ -1451,7 +1451,7 @@
 
                                             <button
                                                 onClick={aggiungiRicetta}
-                                                className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition min-h-[44px] text-base font-semibold"
+                                                className="w-full bg-slate-500 text-white py-3 rounded-lg hover:bg-teal-600 transition min-h-[44px] text-base font-semibold"
                                             >
                                                 {editingRecipeId ? 'Salva Modifiche' : 'Aggiungi Ricetta'}
                                             </button>
@@ -1569,7 +1569,7 @@
                                                 <div className="mt-2 text-center">
                                                     <button
                                                         onClick={() => toggleCardExpand('ricette', ricetta.id)}
-                                                        className={`text-xs ${textSecondary} hover:text-orange-600 transition`}
+                                                        className={`text-xs ${textSecondary} hover:text-teal-600 transition`}
                                                     >
                                                         {isExpanded ? '▲ Nascondi dettagli' : '▼ Mostra dettagli'}
                                                     </button>
