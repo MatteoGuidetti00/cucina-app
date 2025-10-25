@@ -182,6 +182,26 @@
                 tracking: true
             });
 
+            // Stati per card espanse (track by ID)
+            const [expandedCards, setExpandedCards] = useState({
+                ricette: new Set(),
+                ingredienti: new Set(),
+                inventario: new Set(),
+                spesa: new Set()
+            });
+
+            const toggleCardExpand = (section, id) => {
+                setExpandedCards(prev => {
+                    const newSet = new Set(prev[section]);
+                    if (newSet.has(id)) {
+                        newSet.delete(id);
+                    } else {
+                        newSet.add(id);
+                    }
+                    return { ...prev, [section]: newSet };
+                });
+            };
+
             // Helper per classi dark mode
             const inputClass = (base = '') => `${base} ${darkMode ? 'dark-input' : 'bg-white border-gray-300'}`;
             const textClass = darkMode ? 'text-gray-100' : 'text-gray-800';
@@ -1306,11 +1326,22 @@
                                     )}
 
                                     <div className="space-y-3 sm:space-y-4">
-                                        {ricette.map(ricetta => (
-                                            <div key={ricetta.id} className={`border rounded-lg p-3 sm:p-4 hover:shadow-md transition ${cardClass}`}>
-                                                <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2 mb-2">
-                                                    <h3 className={`text-lg sm:text-xl font-semibold ${textClass}`}>{ricetta.nome}</h3>
-                                                    <div className="flex gap-2 flex-shrink-0">
+                                        {ricette.map(ricetta => {
+                                            const isExpanded = expandedCards.ricette.has(ricetta.id);
+                                            const macroPorzione = ricetta.grammiPorzione
+                                                ? calcolaMacroDaGrammi(ricetta, parseFloat(ricetta.grammiPorzione))
+                                                : calcolaMacroDaGrammi(ricetta, 100);
+
+                                            return (
+                                                <div key={ricetta.id} className={`border rounded-lg p-3 sm:p-4 hover:shadow-md transition ${cardClass}`}>
+                                                    <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2 mb-2">
+                                                        <div className="flex-1 cursor-pointer" onClick={() => toggleCardExpand('ricette', ricetta.id)}>
+                                                            <h3 className={`text-lg sm:text-xl font-semibold ${textClass}`}>{ricetta.nome}</h3>
+                                                            {ricetta.grammiPorzione && (
+                                                                <p className={`text-xs ${textSecondary}`}>Porzione: {ricetta.grammiPorzione}g</p>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex gap-2 flex-shrink-0">
                                                         <button
                                                             onClick={() => modificaRicetta(ricetta)}
                                                             className="text-amber-600 hover:text-amber-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -1338,68 +1369,82 @@
                                                         >
                                                             <Trash2 />
                                                         </button>
+                                                        </div>
                                                     </div>
                                                 </div>
 
+                                                {/* Macro per porzione - sempre visibili */}
                                                 <div className="mb-2">
-                                                    <p className={`font-semibold text-sm ${textSecondary}`}>Ingredienti:</p>
-                                                    <ul className={`text-sm ${textSecondary}`}>
-                                                        {ricetta.ingredienti.map((ing, idx) => (
-                                                            <li key={idx}>• {ing.nome}: {ing.quantita} {ing.unita}</li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-
-                                                {ricetta.istruzioni && (
-                                                    <p className={`text-sm mb-2 ${textSecondary}`}>{ricetta.istruzioni}</p>
-                                                )}
-
-                                                <div className="mb-2">
-                                                    <p className="text-xs text-gray-500 mb-1">Macro per 100g:</p>
+                                                    <p className={`text-xs ${textSecondary} mb-1`}>
+                                                        Macro per porzione {ricetta.grammiPorzione ? `(${ricetta.grammiPorzione}g)` : '(100g)'}:
+                                                    </p>
                                                     <div className="flex flex-wrap gap-2 text-sm">
                                                         <span className="bg-red-100 text-red-700 px-2 py-1 rounded">
-                                                            {ricetta.macro.calorie} kcal
+                                                            {macroPorzione.calorie} kcal
                                                         </span>
                                                         <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                                                            P: {ricetta.macro.proteine}g
+                                                            P: {macroPorzione.proteine}g
                                                         </span>
                                                         <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
-                                                            C: {ricetta.macro.carboidrati}g
+                                                            C: {macroPorzione.carboidrati}g
                                                         </span>
                                                         <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
-                                                            G: {ricetta.macro.grassi}g
+                                                            G: {macroPorzione.grassi}g
                                                         </span>
                                                     </div>
                                                 </div>
 
-                                                {ricetta.grammiPorzione && (
-                                                    <div>
-                                                        <p className="text-xs text-gray-500 mb-1">Macro per porzione ({ricetta.grammiPorzione}g):</p>
-                                                        <div className="flex flex-wrap gap-2 text-sm">
-                                                            {(() => {
-                                                                const macroPorzione = calcolaMacroDaGrammi(ricetta, parseFloat(ricetta.grammiPorzione));
-                                                                return (
-                                                                    <>
-                                                                        <span className="bg-red-50 text-red-600 px-2 py-1 rounded border border-red-200">
-                                                                            {macroPorzione.calorie} kcal
-                                                                        </span>
-                                                                        <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-200">
-                                                                            P: {macroPorzione.proteine}g
-                                                                        </span>
-                                                                        <span className="bg-yellow-50 text-yellow-600 px-2 py-1 rounded border border-yellow-200">
-                                                                            C: {macroPorzione.carboidrati}g
-                                                                        </span>
-                                                                        <span className="bg-green-50 text-green-600 px-2 py-1 rounded border border-green-200">
-                                                                            G: {macroPorzione.grassi}g
-                                                                        </span>
-                                                                    </>
-                                                                );
-                                                            })()}
+                                                {/* Dettagli espandibili */}
+                                                {isExpanded && (
+                                                    <div className={`mt-3 pt-3 border-t ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+                                                        <div className="mb-3">
+                                                            <p className={`font-semibold text-sm ${textSecondary} mb-1`}>Ingredienti:</p>
+                                                            <ul className={`text-sm ${textSecondary}`}>
+                                                                {ricetta.ingredienti.map((ing, idx) => (
+                                                                    <li key={idx}>• {ing.nome}: {ing.quantita} {ing.unita}</li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+
+                                                        {ricetta.istruzioni && (
+                                                            <div className="mb-3">
+                                                                <p className={`font-semibold text-sm ${textSecondary} mb-1`}>Istruzioni:</p>
+                                                                <p className={`text-sm ${textSecondary}`}>{ricetta.istruzioni}</p>
+                                                            </div>
+                                                        )}
+
+                                                        <div>
+                                                            <p className={`font-semibold text-sm ${textSecondary} mb-1`}>Macro per 100g:</p>
+                                                            <div className="flex flex-wrap gap-2 text-sm">
+                                                                <span className="bg-red-50 text-red-600 px-2 py-1 rounded border border-red-200">
+                                                                    {ricetta.macro.calorie} kcal
+                                                                </span>
+                                                                <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-200">
+                                                                    P: {ricetta.macro.proteine}g
+                                                                </span>
+                                                                <span className="bg-yellow-50 text-yellow-600 px-2 py-1 rounded border border-yellow-200">
+                                                                    C: {ricetta.macro.carboidrati}g
+                                                                </span>
+                                                                <span className="bg-green-50 text-green-600 px-2 py-1 rounded border border-green-200">
+                                                                    G: {ricetta.macro.grassi}g
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 )}
+
+                                                {/* Indicatore espandi/comprimi */}
+                                                <div className="mt-2 text-center">
+                                                    <button
+                                                        onClick={() => toggleCardExpand('ricette', ricetta.id)}
+                                                        className={`text-xs ${textSecondary} hover:text-orange-600 transition`}
+                                                    >
+                                                        {isExpanded ? '▲ Nascondi dettagli' : '▼ Mostra dettagli'}
+                                                    </button>
+                                                </div>
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
@@ -1668,6 +1713,7 @@
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                         {getIngredientiFiltrati().map(ing => {
+                                            const isExpanded = expandedCards.ingredienti.has(ing.id);
                                             // Calcola i macro in base all'unità predefinita
                                             const unitaDefault = ing.unitaDefault || ing.unitaPrincipale || 'g';
                                             const unitaPrincipale = ing.unitaPrincipale || 'g';
@@ -1693,7 +1739,7 @@
                                             return (
                                                 <div key={ing.id} className={`border-2 border-teal-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition ${bgAccent}`}>
                                                     <div className="flex justify-between items-start mb-2">
-                                                        <div className="flex-1">
+                                                        <div className="flex-1 cursor-pointer" onClick={() => toggleCardExpand('ingredienti', ing.id)}>
                                                             <h3 className={`font-bold text-base ${textClass}`}>{ing.nome}</h3>
                                                             <div className="flex flex-wrap gap-1 mt-1">
                                                                 <span className={`text-xs px-2 py-0.5 rounded ${darkMode ? 'bg-teal-900 text-teal-200' : 'bg-teal-100 text-teal-700'}`}>
@@ -1743,10 +1789,10 @@
                                                         </div>
                                                     </div>
 
-                                                    {/* Conversioni */}
-                                                    {ing.conversioniUnita && ing.conversioniUnita.length > 0 && (
-                                                        <div className="pt-2 border-t border-teal-200">
-                                                            <p className={`text-xs ${textSecondary} mb-1`}>Conversioni:</p>
+                                                    {/* Conversioni - visibili solo quando espanso */}
+                                                    {isExpanded && ing.conversioniUnita && ing.conversioniUnita.length > 0 && (
+                                                        <div className={`pt-2 mt-2 border-t ${darkMode ? 'border-gray-600' : 'border-teal-200'}`}>
+                                                            <p className={`text-xs ${textSecondary} mb-1 font-semibold`}>Conversioni disponibili:</p>
                                                             <div className="flex flex-wrap gap-1">
                                                                 {ing.conversioniUnita
                                                                     .filter(conv => conv.unita && conv.fattore)
@@ -1757,6 +1803,18 @@
                                                                     ))
                                                                 }
                                                             </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Indicatore espandi/comprimi */}
+                                                    {ing.conversioniUnita && ing.conversioniUnita.length > 0 && (
+                                                        <div className="mt-2 text-center">
+                                                            <button
+                                                                onClick={() => toggleCardExpand('ingredienti', ing.id)}
+                                                                className={`text-xs ${textSecondary} hover:text-teal-600 transition`}
+                                                            >
+                                                                {isExpanded ? '▲ Nascondi conversioni' : '▼ Mostra conversioni'}
+                                                            </button>
                                                         </div>
                                                     )}
                                                 </div>
